@@ -13,7 +13,7 @@ OBJDIR = obj
 
 clean:
 	rm -rf $(OBJDIR)
-	rm -f _pcst_fast.so
+	rm -f pcst_fast.so
 	rm -f pcst_fast.py
 	rm -f pcst_fast.pyc
 	rm -f pcst_fast_test
