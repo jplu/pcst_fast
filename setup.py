@@ -52,8 +52,8 @@ def has_flag(compiler, flagname):
 
 def cpp_flag(compiler):
 
-    if has_flag(compiler, '-std=c++11'): return '-std=c++11'
-    else: raise RuntimeError('Unsupported compiler -- at least C++11 support is needed!')
+    if has_flag(compiler, '-std=c++23'): return '-std=c++23'
+    else: raise RuntimeError('Unsupported compiler -- at least C++23 support is needed!')
 
 
 class BuildExt(build_ext):
