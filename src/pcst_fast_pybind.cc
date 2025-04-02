@@ -28,7 +28,7 @@ namespace {
     int safe_cast_int64_to_int(int64_t val) {
         if (std::cmp_less(val, std::numeric_limits<int>::min()) ||
             std::cmp_greater(val, std::numeric_limits<int>::max())) {
-                py::gil_scoped_acquire acquire;
+                //py::gil_scoped_acquire acquire;
                 throw py::value_error(
                     "Input index value " + std::to_string(val) +
                     " cannot fit into the internal 32-bit integer type."
@@ -50,7 +50,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         if (root >= 0) {
             if (num_clusters != 1 && num_clusters != 0) {
                 if (verbosity_level >= 0) {
-                    py::gil_scoped_acquire acquire;
+                    //py::gil_scoped_acquire acquire;
                     py::print("Warning: num_clusters parameter is typically 1 or 0 for rooted PCST.", py::arg("flush")=true);
                 }
             }
@@ -58,7 +58,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
             internal_target_num_active_clusters = 0;
         } else {
             if (num_clusters <= 0) {
-                py::gil_scoped_acquire acquire;
+                //py::gil_scoped_acquire acquire;
             
                 throw py::value_error("In the unrooted case, num_clusters must be positive.");
             }
@@ -71,7 +71,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         py::buffer_info costs_info = costs_py.request();
 
         if (edges_info.ndim != 2 || edges_info.shape[1] != 2) {
-            py::gil_scoped_acquire acquire;
+            //py::gil_scoped_acquire acquire;
     
             throw py::value_error("Edges must be a 2D array with shape (num_edges, 2).");
         }
@@ -79,7 +79,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         const auto num_edges_ssize = edges_info.shape[0];
         
         if (std::cmp_greater(num_edges_ssize, std::numeric_limits<int>::max())) {
-             py::gil_scoped_acquire acquire;
+             //py::gil_scoped_acquire acquire;
         
             throw py::value_error("Number of edges exceeds internal integer limits.");
         }
@@ -87,7 +87,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         const int num_edges = static_cast<int>(num_edges_ssize);
 
         if (prizes_info.ndim != 1) {
-            py::gil_scoped_acquire acquire;
+            //py::gil_scoped_acquire acquire;
         
             throw py::value_error("Prizes must be a 1D array.");
         }
@@ -95,7 +95,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         const auto num_nodes_ssize = prizes_info.shape[0];
         
         if (std::cmp_greater(num_nodes_ssize, std::numeric_limits<int>::max())) {
-            py::gil_scoped_acquire acquire;
+            //py::gil_scoped_acquire acquire;
         
             throw py::value_error("Number of nodes exceeds internal integer limits.");
         }
@@ -103,19 +103,19 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         const int num_nodes = static_cast<int>(num_nodes_ssize);
 
         if (costs_info.ndim != 1) {
-            py::gil_scoped_acquire acquire;
+            //py::gil_scoped_acquire acquire;
         
             throw py::value_error("Costs must be a 1D array.");
         }
         
         if (static_cast<py::ssize_t>(costs_info.shape[0]) != num_edges_ssize) {
-             py::gil_scoped_acquire acquire;
+             //py::gil_scoped_acquire acquire;
         
             throw py::value_error("Number of costs must equal number of edges.");
         }
         
         if (root >= num_nodes) {
-            py::gil_scoped_acquire acquire;
+            //py::gil_scoped_acquire acquire;
         
             throw py::index_error("Root node index " + std::to_string(root) +
                                   " is out of range [0, " + std::to_string(num_nodes) + ").");
@@ -131,7 +131,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
             int v = safe_cast_int64_to_int(edges_ptr[2 * i + 1]);
             
             if (u < 0 || u >= num_nodes || v < 0 || v >= num_nodes) {
-                 py::gil_scoped_acquire acquire;
+                 //py::gil_scoped_acquire acquire;
     
                 throw py::index_error(
                      "Edge (" + std::to_string(u) + ", " + std::to_string(v) +
@@ -154,7 +154,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         ca::PCSTFast::PruningMethod pruning_method = ca::PCSTFast::parse_pruning_method(pruning_sv);
         
         if (pruning_method == ca::PCSTFast::PruningMethod::kUnknownPruning) {
-             py::gil_scoped_acquire acquire;
+             //py::gil_scoped_acquire acquire;
         
             throw py::value_error(std::string("Invalid pruning method string: \"") + std::string(pruning_sv) + "\"");
         }
