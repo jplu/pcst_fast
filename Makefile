@@ -2,7 +2,7 @@
 #
 # This makefile is based on http://make.paulandlesley.org/autodep.html .
 
-CXXFLAGS = -std=c++23 -Wall -Wextra -O3 -fPIC
+CXXFLAGS = -std=c++23 -Wall -Wextra -O3 -fPIC -pthread
 GTESTDIR = external/googletest/googletest
 
 SRCDIR = src
