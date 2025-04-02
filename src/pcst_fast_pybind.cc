@@ -13,17 +13,16 @@
 #include <utility>
 #include <vector>
 #include <numeric>
-#include <cstdio>
 
 namespace py = pybind11;
 namespace ca = cluster_approx;
 
 namespace {
     void output_function(const char* output) {
-        //py::gil_scoped_acquire acquire;
-        //py::print(output, py::arg("flush") = true);
-        fprintf(stderr, "%s\n", output);
-        fflush(stderr);
+        py::gil_scoped_acquire acquire;
+        py::print(output, py::arg("flush") = true);
+        //fprintf(stderr, "%s\n", output);
+        //fflush(stderr);
     }
 
     int safe_cast_int64_to_int(int64_t val) {
@@ -167,7 +166,12 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         std::vector<int> result_edges;
         result_nodes.reserve(static_cast<size_t>(num_nodes / 2));
         result_edges.reserve(static_cast<size_t>(num_edges / 2));
-        bool success = algo.run(&result_nodes, &result_edges);
+        bool success = false;
+
+        {
+            py::gil_scoped_release release;
+            success = algo.run(&result_nodes, &result_edges);
+        }
         
         if (!success) {
             throw std::runtime_error("PCSTFast algorithm run failed. Check logs or C++ level output for details.");
@@ -199,7 +203,7 @@ PYBIND11_MODULE(pcst_fast, m) {
 
     m.def("pcst_fast",
           &pcst_fast_pybind,
-          py::call_guard<py::gil_scoped_release>(),
+          //py::call_guard<py::gil_scoped_release>(),
           py::arg("edges"),
           py::arg("prizes"),
           py::arg("costs"),
