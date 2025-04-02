@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 #include <numeric>
+#include <cstdio>
 
 namespace py = pybind11;
 namespace ca = cluster_approx;
@@ -198,7 +199,7 @@ PYBIND11_MODULE(pcst_fast, m) {
 
     m.def("pcst_fast",
           &pcst_fast_pybind,
-          //py::call_guard<py::gil_scoped_release>(),
+          py::call_guard<py::gil_scoped_release>(),
           py::arg("edges"),
           py::arg("prizes"),
           py::arg("costs"),
