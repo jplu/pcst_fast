@@ -19,8 +19,10 @@ namespace ca = cluster_approx;
 
 namespace {
     void output_function(const char* output) {
-        py::gil_scoped_acquire acquire;
-        py::print(output, py::arg("flush") = true);
+        //py::gil_scoped_acquire acquire;
+        //py::print(output, py::arg("flush") = true);
+        fprintf(stderr, "%s\n", output);
+        fflush(stderr);
     }
 
     int safe_cast_int64_to_int(int64_t val) {
