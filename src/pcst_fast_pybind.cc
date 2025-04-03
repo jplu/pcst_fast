@@ -21,14 +21,11 @@ namespace {
     void output_function(const char* output) {
         py::gil_scoped_acquire acquire;
         py::print(output, py::arg("flush") = true);
-        //fprintf(stderr, "%s\n", output);
-        //fflush(stderr);
     }
 
     int safe_cast_int64_to_int(int64_t val) {
         if (std::cmp_less(val, std::numeric_limits<int>::min()) ||
             std::cmp_greater(val, std::numeric_limits<int>::max())) {
-                //py::gil_scoped_acquire acquire;
                 throw py::value_error(
                     "Input index value " + std::to_string(val) +
                     " cannot fit into the internal 32-bit integer type."
@@ -47,10 +44,10 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
     std::string_view pruning_sv,
     int verbosity_level) {
         int internal_target_num_active_clusters = num_clusters;
+        
         if (root >= 0) {
             if (num_clusters != 1 && num_clusters != 0) {
-                if (verbosity_level >= 0) {
-                    //py::gil_scoped_acquire acquire;
+                if (verbosity_level >= 0) {            
                     py::print("Warning: num_clusters parameter is typically 1 or 0 for rooted PCST.", py::arg("flush")=true);
                 }
             }
@@ -58,8 +55,6 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
             internal_target_num_active_clusters = 0;
         } else {
             if (num_clusters <= 0) {
-                //py::gil_scoped_acquire acquire;
-            
                 throw py::value_error("In the unrooted case, num_clusters must be positive.");
             }
             
@@ -71,58 +66,43 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         py::buffer_info costs_info = costs_py.request();
 
         if (edges_info.ndim != 2 || edges_info.shape[1] != 2) {
-            //py::gil_scoped_acquire acquire;
-    
             throw py::value_error("Edges must be a 2D array with shape (num_edges, 2).");
         }
         
         const auto num_edges_ssize = edges_info.shape[0];
         
         if (std::cmp_greater(num_edges_ssize, std::numeric_limits<int>::max())) {
-             //py::gil_scoped_acquire acquire;
-        
             throw py::value_error("Number of edges exceeds internal integer limits.");
         }
         
         const int num_edges = static_cast<int>(num_edges_ssize);
 
         if (prizes_info.ndim != 1) {
-            //py::gil_scoped_acquire acquire;
-        
             throw py::value_error("Prizes must be a 1D array.");
         }
         
         const auto num_nodes_ssize = prizes_info.shape[0];
         
         if (std::cmp_greater(num_nodes_ssize, std::numeric_limits<int>::max())) {
-            //py::gil_scoped_acquire acquire;
-        
             throw py::value_error("Number of nodes exceeds internal integer limits.");
         }
         
         const int num_nodes = static_cast<int>(num_nodes_ssize);
 
         if (costs_info.ndim != 1) {
-            //py::gil_scoped_acquire acquire;
-        
             throw py::value_error("Costs must be a 1D array.");
         }
         
         if (static_cast<py::ssize_t>(costs_info.shape[0]) != num_edges_ssize) {
-             //py::gil_scoped_acquire acquire;
-        
             throw py::value_error("Number of costs must equal number of edges.");
         }
         
         if (root >= num_nodes) {
-            //py::gil_scoped_acquire acquire;
-        
             throw py::index_error("Root node index " + std::to_string(root) +
                                   " is out of range [0, " + std::to_string(num_nodes) + ").");
         }
         
         int actual_root = (root < 0) ? ca::PCSTFast::kNoRoot : root;
-
         std::vector<std::pair<int, int>> tmp_edges(num_edges);
         const int64_t* edges_ptr = static_cast<const int64_t*>(edges_info.ptr);
         
@@ -131,8 +111,6 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
             int v = safe_cast_int64_to_int(edges_ptr[2 * i + 1]);
             
             if (u < 0 || u >= num_nodes || v < 0 || v >= num_nodes) {
-                 //py::gil_scoped_acquire acquire;
-    
                 throw py::index_error(
                      "Edge (" + std::to_string(u) + ", " + std::to_string(v) +
                      ") contains node index out of valid range [0, " +
@@ -154,8 +132,6 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         ca::PCSTFast::PruningMethod pruning_method = ca::PCSTFast::parse_pruning_method(pruning_sv);
         
         if (pruning_method == ca::PCSTFast::PruningMethod::kUnknownPruning) {
-             //py::gil_scoped_acquire acquire;
-        
             throw py::value_error(std::string("Invalid pruning method string: \"") + std::string(pruning_sv) + "\"");
         }
 
@@ -203,7 +179,6 @@ PYBIND11_MODULE(pcst_fast, m) {
 
     m.def("pcst_fast",
           &pcst_fast_pybind,
-          //py::call_guard<py::gil_scoped_release>(),
           py::arg("edges"),
           py::arg("prizes"),
           py::arg("costs"),
@@ -228,8 +203,8 @@ PYBIND11_MODULE(pcst_fast, m) {
                                              Must be C-contiguous.
             costs (numpy.ndarray[float64]): Array of shape (num_edges,) listing non-negative edge costs.
                                             Must be C-contiguous.
-            root (int): The root node index for the rooted variant (PCSF Tree).
-                        Use -1 or any negative value for the unrooted variant (PCSF Forest).
+            root (int): The root node index for the rooted variant (PCSTree).
+                        Use -1 or any negative value for the unrooted variant (PCSForest).
                         Must be less than num_nodes if non-negative.
             num_clusters (int): The target number of trees (connected components) in the output forest.
                                 For the rooted variant (root >= 0), this is typically 1 (or 0 internally),
