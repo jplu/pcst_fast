@@ -6,6 +6,7 @@
 #include <iterator> // For std::begin, std::end
 #include <utility>  // For std::pair
 #include <ranges>   // For std::ranges::sort
+#include <string>   // For std::string in logger lambda
 
 #include "gtest/gtest.h"
 
@@ -28,12 +29,20 @@ void RunAlgo(const std::vector<std::pair<int, int>>& edges,
              ca::PCSTFast::PruningMethod pruning,
              const std::vector<int>& expected_node_result,
              const std::vector<int>& expected_edge_result) {
-    std::vector<int> node_result;
-    std::vector<int> edge_result;
+    std::vector<ca::PCSTFast::IndexType> node_result; // Use IndexType
+    std::vector<ca::PCSTFast::IndexType> edge_result; // Use IndexType
 
-    // Instantiate the refactored PCSTFast class
+    // ***** CHANGED HERE: Create a compatible logger lambda *****
+    // Wrap the old WriteToStderr (void(const char*)) into the new Logger format
+    // (void(int, const std::string&)). We ignore the level here for simplicity,
+    // matching the previous behavior where WriteToStderr didn't use a level.
+    auto logger_lambda = [](int /*level*/, const std::string& message) {
+        WriteToStderr(message.c_str());
+    };
+
+    // Instantiate the refactored PCSTFast class, passing the lambda
     ca::PCSTFast algo(edges, prizes, costs, root, target_num_active_clusters,
-                      pruning, kVerbosityLevel, WriteToStderr);
+                      pruning, kVerbosityLevel, logger_lambda); // Pass lambda
 
     // Run the algorithm
     ASSERT_TRUE(algo.run(&node_result, &edge_result));
@@ -43,14 +52,14 @@ void RunAlgo(const std::vector<std::pair<int, int>>& edges,
     std::ranges::sort(edge_result);
 
     // Sort expected results for comparison (create copies first)
-    std::vector<int> sorted_expected_node_result = expected_node_result;
+    // Ensure expected results are also treated as IndexType (int)
+    std::vector<ca::PCSTFast::IndexType> sorted_expected_node_result = expected_node_result;
     std::ranges::sort(sorted_expected_node_result);
 
-    std::vector<int> sorted_expected_edge_result = expected_edge_result;
+    std::vector<ca::PCSTFast::IndexType> sorted_expected_edge_result = expected_edge_result;
     std::ranges::sort(sorted_expected_edge_result);
 
     // Check results using the provided helper
-    // Assumes CheckResult calls ASSERT_EQ or similar internally
     CheckResult(sorted_expected_node_result, node_result);
     CheckResult(sorted_expected_edge_result, edge_result);
 }
@@ -98,9 +107,8 @@ void RunAlgo(const std::vector<std::pair<int, int>>& edges,
 
 
 // --- Test Cases ---
-// No changes are needed below this line, as the RunAlgo helpers
-// correctly adapt the test inputs to the PCSTFast constructor and run method,
-// whose public signatures (relevant to these tests) were preserved.
+// No changes needed to the individual TEST bodies.
+// The expected results reflect the user's latest provided values.
 
 TEST(PCSTFastTest, SimpleTestRootedNoPruning) {
     std::vector<std::pair<int, int>> edges = {{0, 1}, {1, 2}};
@@ -318,7 +326,7 @@ TEST(PCSTFastTest, Medium1TestRootedGWPruning) {
     int root = 3; // Root is node 3
     int target_num_active_clusters = 0;
     auto pruning = ca::PCSTFast::PruningMethod::kGWPruning;
-    
+
     const int node_result[] = {3, 4, 6, 7, 8};
     const int edge_result[] = {16, 20, 21, 23}; // Edges: (3,7), (4,6), (4,7), (6,8)
 
@@ -350,7 +358,7 @@ TEST(PCSTFastTest, Medium1TestRootedStrongPruning) {
     int root = 3; // Root is node 3
     int target_num_active_clusters = 0;
     auto pruning = ca::PCSTFast::PruningMethod::kStrongPruning;
-    const int node_result[] = {3};
+    const int node_result[] = {3}; // User's updated expectation
 
     RunAlgo(edges, prizes, costs, root, target_num_active_clusters, pruning,
             node_result);
@@ -362,16 +370,9 @@ TEST(PCSTFastTest, Simple6TestUnRootedGWPruning) {
     const double prizes[] = {100.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100.0};
     const double costs[] = {0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9};
     int root = ca::PCSTFast::kNoRoot;
-    int target_num_active_clusters = 1; // Target 1 final cluster
+    int target_num_active_clusters = 1;
     auto pruning = ca::PCSTFast::PruningMethod::kGWPruning;
-    // Start Previous expected result
-    //const int node_result[] = {0, 1, 2, 3, 4, 5, 6, 7};
-    //const int edge_result[] = {0, 1, 2, 3, 4, 5, 6};
-    
-    //RunAlgo(edges, prizes, costs, root, target_num_active_clusters, pruning,
-    //        node_result, edge_result);
-    // End Previous expected result
-    const int node_result[] = {7};
+    const int node_result[] = {7}; // User's updated expectation
 
     RunAlgo(edges, prizes, costs, root, target_num_active_clusters, pruning,
             node_result);
@@ -383,7 +384,7 @@ TEST(PCSTFastTest, Simple7TestUnrootedStrongPruning) {
     const double prizes[] = {0, 2.2, 0, 0, 2.1};
     const double costs[] = {1, 1, 1, 1};
     int root = ca::PCSTFast::kNoRoot;
-    int target_num_active_clusters = 1; // Target 1 final cluster
+    int target_num_active_clusters = 1;
     auto pruning = ca::PCSTFast::PruningMethod::kStrongPruning;
     const int node_result[] = {1};
 
@@ -397,31 +398,21 @@ TEST(PCSTFastTest, Simple7TestUnrootedGWPruning) {
     const double prizes[] = {0, 2.2, 0, 0, 2.1};
     const double costs[] = {1, 1, 1, 1};
     int root = ca::PCSTFast::kNoRoot;
-    int target_num_active_clusters = 1; // Target 1 final cluster
+    int target_num_active_clusters = 1;
     auto pruning = ca::PCSTFast::PruningMethod::kGWPruning;
-   
-    // start Previous test
-    //const int node_result[] = {0, 1, 2, 3, 4};
-    //const int edge_result[] = {0, 1, 2, 3};
+    const int node_result[] = {1}; // User's updated expectation
 
-    //RunAlgo(edges, prizes, costs, root, target_num_active_clusters, pruning,
-    //        node_result, edge_result);
-    // end previous test
-
-    const int node_result[] = {1};
-    // Empty edge result - use the appropriate RunAlgo overload
     RunAlgo(edges, prizes, costs, root, target_num_active_clusters, pruning,
             node_result);
-
 }
 
 
 TEST(PCSTFastTest, Simple8TestUnrootedStrongPruning) {
     std::vector<std::pair<int, int>> edges = {{0, 1}, {1, 2}};
     const double prizes[] = {2, 2, 2};
-    const double costs[] = {0, 5}; // Edge 0 has zero cost
+    const double costs[] = {0, 5};
     int root = ca::PCSTFast::kNoRoot;
-    int target_num_active_clusters = 1; // Target 1 final cluster
+    int target_num_active_clusters = 1;
     auto pruning = ca::PCSTFast::PruningMethod::kStrongPruning;
     const int node_result[] = {0, 1};
     const int edge_result[] = {0};
