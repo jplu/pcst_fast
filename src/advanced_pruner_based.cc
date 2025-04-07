@@ -1,5 +1,6 @@
 #include "advanced_pruner_base.h"
 #include "pruning_context.h"
+#include "logger.h"
 
 #include <vector>
 #include <algorithm>
@@ -9,8 +10,10 @@
 namespace cluster_approx {
     namespace internal {
 
+        using internal::LogLevel;
+
         void AdvancedPrunerBase::build_phase2(const PruningContext& context) {
-            context.log(3, "AdvancedPrunerBase::build_phase2 Entry (Filtering %zu phase 1 edges).\n", context.phase1_result.size());
+            context.logger.log(LogLevel::INFO, "AdvancedPrunerBase::build_phase2 Entry (Filtering %zu phase 1 edges).\n", context.phase1_result.size());
             phase2_result_local_.clear();
             phase2_result_local_.reserve(context.phase1_result.size());
 
@@ -25,17 +28,17 @@ namespace cluster_approx {
                     if (u_good && v_good) {
                         phase2_result_local_.push_back(edge_idx);
                     } else {
-                        context.log(4, "  Phase 2 pruning: Removing edge %d (%d, %d) due to non-good endpoint(s).\n", edge_idx, edge.first, edge.second);
+                        context.logger.log(LogLevel::DEBUG, "  Phase 2 pruning: Removing edge %d (%d, %d) due to non-good endpoint(s).\n", edge_idx, edge.first, edge.second);
                     }
                 } else {
-                     context.log(2, "Warning: Invalid edge index %d in AdvancedPrunerBase::build_phase2.\n", edge_idx);
+                     context.logger.log(LogLevel::WARNING, "Warning: Invalid edge index %d in AdvancedPrunerBase::build_phase2.\n", edge_idx);
                 }
             }
-            context.log(3, "Pruning: Phase 2 (Connectivity). Edges remaining: %zu\n", phase2_result_local_.size());
+            context.logger.log(LogLevel::INFO, "Pruning: Phase 2 (Connectivity). Edges remaining: %zu\n", phase2_result_local_.size());
         }
 
         void AdvancedPrunerBase::build_phase3_adjacency(const PruningContext& context) {
-            context.log(3, "AdvancedPrunerBase::build_phase3_adjacency Entry (Using %zu phase 2 edges).\n", phase2_result_local_.size());
+            context.logger.log(LogLevel::INFO, "AdvancedPrunerBase::build_phase3_adjacency Entry (Using %zu phase 2 edges).\n", phase2_result_local_.size());
             size_t num_nodes = context.prizes.size();
 
             if (phase3_neighbors_.size() != num_nodes) {
@@ -54,18 +57,18 @@ namespace cluster_approx {
                         phase3_neighbors_[edge.second].emplace_back(edge.first, cost);
                         edges_added++;
                     } else {
-                        context.log(0, "Error: Invalid node index in edge %d while building phase 3 adjacency list.\n", edge_idx);
+                        context.logger.log(LogLevel::FATAL, "Error: Invalid node index in edge %d while building phase 3 adjacency list.\n", edge_idx);
                         assert(false && "Invalid node index in build_phase3_adjacency");
                     }
                 } else {
-                    context.log(2, "Warning: Invalid edge index %d found in phase2_result_ during adjacency build.\n", edge_idx);
+                    context.logger.log(LogLevel::WARNING, "Warning: Invalid edge index %d found in phase2_result_ during adjacency build.\n", edge_idx);
                 }
             }
-            context.log(3, "AdvancedPrunerBase::build_phase3_adjacency Exit. Added %d edges (x2) to lists.\n", edges_added);
+            context.logger.log(LogLevel::INFO, "AdvancedPrunerBase::build_phase3_adjacency Exit. Added %d edges (x2) to lists.\n", edges_added);
         }
 
         void AdvancedPrunerBase::build_pruned_node_set(const PruningContext& context, std::vector<PCSTFast::IndexType>& node_set) {
-            context.log(3, "AdvancedPrunerBase::build_pruned_node_set Entry.\n");
+            context.logger.log(LogLevel::INFO, "AdvancedPrunerBase::build_pruned_node_set Entry.\n");
             node_set.clear();
             size_t num_nodes = context.prizes.size();
             node_set.reserve(num_nodes);
@@ -82,11 +85,11 @@ namespace cluster_approx {
             }
 
             std::sort(node_set.begin(), node_set.end());
-            context.log(3, "AdvancedPrunerBase::build_pruned_node_set Exit. Final node set size: %zu\n", static_cast<size_t>(nodes_included));
+            context.logger.log(LogLevel::INFO, "AdvancedPrunerBase::build_pruned_node_set Exit. Final node set size: %zu\n", static_cast<size_t>(nodes_included));
         }
 
         void AdvancedPrunerBase::setup(const PruningContext& context) {
-            context.log(4, "AdvancedPrunerBase::setup Entry.\n");
+            context.logger.log(LogLevel::DEBUG, "AdvancedPrunerBase::setup Entry.\n");
             phase2_result_local_.reserve(context.phase1_result.size());
 
             size_t num_nodes = context.prizes.size();
@@ -95,7 +98,7 @@ namespace cluster_approx {
 
             build_phase2(context);
             build_phase3_adjacency(context);
-            context.log(4, "AdvancedPrunerBase::setup Exit.\n");
+            context.logger.log(LogLevel::DEBUG, "AdvancedPrunerBase::setup Exit.\n");
         }
 
     }
