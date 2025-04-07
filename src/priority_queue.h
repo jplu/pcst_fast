@@ -38,7 +38,7 @@ namespace cluster_approx {
             {
                 if (value_comp(lhs.first, rhs.first)) return true;
                 if (value_comp(rhs.first, lhs.first)) return false;
-                
+
                 return index_comp(lhs.second, rhs.second);
             }
         };
@@ -97,13 +97,13 @@ namespace cluster_approx {
 
             [[nodiscard]] bool contains(IndexType index) const noexcept {
                 const PositionType pos_index = to_pos_index(index);
-                
+
                 if (pos_index >= index_to_heap_pos_.size()) {
                     return false;
                 }
-                
+
                 const PositionType heap_pos = index_to_heap_pos_[pos_index];
-                
+
                 return is_valid_and_consistent(heap_pos, pos_index);
             }
 
@@ -120,20 +120,20 @@ namespace cluster_approx {
 
                 while (current_pos > ROOT_POS) {
                     PositionType p_pos = parent(current_pos);
-                
+
                     if (!heap_comp_(target, heap_data_[p_pos])) {
                         break;
                     }
 
                     heap_data_[current_pos] = std::move(heap_data_[p_pos]);
-                
+
                     set_pos_unsafe(heap_data_[current_pos].second, current_pos);
 
                     current_pos = p_pos;
                 }
 
                 heap_data_[current_pos] = std::move(target);
-                
+
                 set_pos_unsafe(heap_data_[current_pos].second, current_pos);
             }
 
@@ -144,7 +144,7 @@ namespace cluster_approx {
             )
             {
                 const PositionType heap_size = heap_data_.size();
-                
+
                 if (heap_size <= 1 || i >= heap_size) return;
 
                 HeapElement target = std::move(heap_data_[i]);
@@ -152,7 +152,7 @@ namespace cluster_approx {
 
                 while (true) {
                     PositionType child_pos = left(current_pos);
-                
+
                     if (child_pos >= heap_size) {
                         break;
                     }
@@ -161,9 +161,9 @@ namespace cluster_approx {
 
                     if (heap_comp_(heap_data_[smaller_child_pos], target)) {
                         heap_data_[current_pos] = std::move(heap_data_[smaller_child_pos]);
-                
+
                         set_pos_unsafe(heap_data_[current_pos].second, current_pos);
-                
+
                         current_pos = smaller_child_pos;
                     } else {
                         break;
@@ -171,7 +171,7 @@ namespace cluster_approx {
                 }
 
                 heap_data_[current_pos] = std::move(target);
-                
+
                 set_pos_unsafe(heap_data_[current_pos].second, current_pos);
             }
 
@@ -183,7 +183,7 @@ namespace cluster_approx {
                 if (r_pos < heap_size && heap_comp_(heap_data_[r_pos], heap_data_[l_pos])) {
                     smaller_child_pos = r_pos;
                 }
-                
+
                 return smaller_child_pos;
             }
 
@@ -201,7 +201,7 @@ namespace cluster_approx {
                     heap_data_.pop_back();
                 } else {
                     heap_data_[pos] = std::move(heap_data_[last_pos]);
-                    
+
                     heap_data_.pop_back();
                     set_pos_unsafe(heap_data_[pos].second, pos);
 
@@ -237,7 +237,7 @@ namespace cluster_approx {
                 if (is_empty()) {
                     if (value) *value = ValueType{};
                     if (index) *index = IndexType{};
-                    
+
                     return false;
                 }
                 if (!value || !index) {
@@ -246,7 +246,7 @@ namespace cluster_approx {
 
                 *value = heap_data_[ROOT_POS].first;
                 *index = heap_data_[ROOT_POS].second;
-                
+
                 return true;
             }
 
@@ -254,7 +254,7 @@ namespace cluster_approx {
                 if(is_empty()) {
                     return std::nullopt;
                 }
-                
+
                 return heap_data_[ROOT_POS];
             }
 
@@ -265,7 +265,7 @@ namespace cluster_approx {
                 if (is_empty()) {
                     if (value) *value = ValueType{};
                     if (index) *index = IndexType{};
-                
+
                     return false;
                 }
                 if (!value || !index) {
@@ -286,11 +286,11 @@ namespace cluster_approx {
                 if (is_empty()) {
                     return std::nullopt;
                 }
-                
+
                 HeapElement min_element = std::move(heap_data_[ROOT_POS]);
-                
+
                 remove_at(ROOT_POS);
-                
+
                 return min_element;
             }
 
@@ -302,7 +302,7 @@ namespace cluster_approx {
                         noexcept(sift_up(0)) && noexcept(sift_down(0)))
             {
                 ensure_index_capacity(index);
-                
+
                 const PositionType pos_index = to_pos_index(index);
                 const PositionType current_heap_pos = index_to_heap_pos_[pos_index];
 
@@ -314,7 +314,7 @@ namespace cluster_approx {
 
                     if (value_changed) {
                         heap_data_[current_heap_pos].first = std::move(value);
-                
+
                         if (decreased) {
                             sift_up(current_heap_pos);
                         } else if (increased) {
@@ -325,9 +325,9 @@ namespace cluster_approx {
                     if (pos_index < index_to_heap_pos_.size()) {
                         index_to_heap_pos_[pos_index] = INVALID_POS;
                     }
-                
+
                     const PositionType new_heap_pos = heap_data_.size();
-                
+
                     heap_data_.emplace_back(std::move(value), index);
                     set_pos_unsafe(index, new_heap_pos);
                     sift_up(new_heap_pos);
@@ -339,12 +339,10 @@ namespace cluster_approx {
                         noexcept(heap_data_.emplace_back(std::move(value), index)) &&
                         noexcept(sift_up(0)))
             {
-                assert(!contains(index) && "Index already exists in PriorityQueue::insert. Use insert_or_update or remove first.");
-
                 ensure_index_capacity(index);
 
                 const PositionType new_pos = heap_data_.size();
-                
+
                 heap_data_.emplace_back(std::move(value), index);
                 set_pos_unsafe(index, new_pos);
                 sift_up(new_pos);
