@@ -1,5 +1,7 @@
+// pcst_fast_test.cc
 #include "pcst_fast.h"
 #include "test_helpers.h"
+#include "logger.h" // Include the new logger header
 
 #include <vector>
 #include <iterator>
@@ -7,17 +9,43 @@
 #include <ranges>
 #include <string>
 #include <iostream>
+#include <memory> // For shared_ptr if needed, or stack allocation
 
 #include "gtest/gtest.h"
 
 namespace ca = cluster_approx;
+namespace ca_internal = cluster_approx::internal;
 
 using test_helpers::WriteToStderr;
 using test_helpers::CheckResult;
 
 namespace {
-    static constexpr int kVerbosityLevel = 0;
+    // Use the LogLevel enum for verbosity control in tests
+    static constexpr ca_internal::LogLevel kTestLogLevel = ca_internal::LogLevel::ERROR; // Or WARNING, INFO, etc.
 }
+
+// LogSink implementation for tests, writing to stderr via test helper
+void TestLogSink(ca_internal::LogLevel level, const std::string& message) {
+    // Optional: Add level prefix for clarity in test output
+    std::string prefix;
+    switch (level) {
+        case ca_internal::LogLevel::FATAL:   prefix = "[FATAL] ";   break;
+        case ca_internal::LogLevel::ERROR:   prefix = "[ERROR] ";   break;
+        case ca_internal::LogLevel::WARNING: prefix = "[WARNING] "; break;
+        case ca_internal::LogLevel::INFO:    prefix = "[INFO] ";    break;
+        case ca_internal::LogLevel::DEBUG:   prefix = "[DEBUG] ";   break;
+        case ca_internal::LogLevel::TRACE:   prefix = "[TRACE] ";   break;
+        case ca_internal::LogLevel::NONE:    return;
+    }
+
+    // Use the WriteToStderr helper if available and noexcept, otherwise fallback
+    if constexpr (noexcept(WriteToStderr(nullptr))) {
+        WriteToStderr((prefix + message).c_str());
+    } else {
+        std::cerr << prefix << message << std::flush;
+    }
+}
+
 
 void RunAlgo(const std::vector<std::pair<int, int>>& edges,
              const std::vector<double>& prizes,
@@ -30,32 +58,33 @@ void RunAlgo(const std::vector<std::pair<int, int>>& edges,
     std::vector<ca::PCSTFast::IndexType> node_result;
     std::vector<ca::PCSTFast::IndexType> edge_result;
 
-    auto logger_lambda = [](int , const std::string& message) {
-        if constexpr (noexcept(WriteToStderr(nullptr))) {
-            WriteToStderr(message.c_str());
-        } else {
-            std::cerr << message;
-            std::cerr.flush();
-        }
-    };
+    // Create the logger instance for this test run
+    ca_internal::Logger test_logger(TestLogSink, kTestLogLevel);
 
-    ca::PCSTFast::Logger test_logger = logger_lambda;
-
+    // Instantiate PCSTFast, passing the logger reference
     ca::PCSTFast algo(edges, prizes, costs, root, target_num_active_clusters,
-                      pruning, kVerbosityLevel, test_logger);
+                      pruning, test_logger); // Pass logger reference
+
     ASSERT_TRUE(algo.run(&node_result, &edge_result));
+
+    // Sort results for comparison
     std::ranges::sort(node_result);
     std::ranges::sort(edge_result);
+
     std::vector<ca::PCSTFast::IndexType> sorted_expected_node_result(
         expected_node_result.begin(), expected_node_result.end());
     std::ranges::sort(sorted_expected_node_result);
+
     std::vector<ca::PCSTFast::IndexType> sorted_expected_edge_result(
         expected_edge_result.begin(), expected_edge_result.end());
     std::ranges::sort(sorted_expected_edge_result);
+
+    // Check results
     CheckResult(sorted_expected_node_result, node_result);
     CheckResult(sorted_expected_edge_result, edge_result);
 }
 
+// Template overloads remain the same, just call the base RunAlgo
 template <size_t N1, size_t N2, size_t N3, size_t N4>
 void RunAlgo(const std::vector<std::pair<int, int>>& edges,
              const double (&prizes)[N1],
@@ -85,11 +114,13 @@ void RunAlgo(const std::vector<std::pair<int, int>>& edges,
     std::vector<double> prizes_vec(std::begin(prizes), std::end(prizes));
     std::vector<double> costs_vec(std::begin(costs), std::end(costs));
     std::vector<int> expected_node_result_vec(std::begin(expected_node_result), std::end(expected_node_result));
-    std::vector<int> expected_edge_result_vec{};
+    std::vector<int> expected_edge_result_vec{}; // Empty edge result
 
     RunAlgo(edges, prizes_vec, costs_vec, root, target_num_active_clusters, pruning,
             expected_node_result_vec, expected_edge_result_vec);
 }
+
+// --- All TEST cases remain exactly the same ---
 
 TEST(PCSTFastTest, SimpleTestRootedNoPruning) {
     std::vector<std::pair<int, int>> edges = {{0, 1}, {1, 2}};
