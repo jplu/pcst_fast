@@ -1,5 +1,4 @@
 #include "pruner_factory.h"
-
 #include "ipruner.h"
 #include "no_pruner.h"
 #include "simple_pruner.h"
