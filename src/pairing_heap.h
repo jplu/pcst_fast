@@ -51,7 +51,6 @@ namespace cluster_approx {
             recycled_node->child_offset = ValueType{};
             recycled_node->payload = std::move(payload);
             recycled_node->next_free = nullptr;
-
             return recycled_node;
         }
 
@@ -64,37 +63,26 @@ namespace cluster_approx {
 
         void clear_free_list() noexcept {
             Node* current = free_list_head_;
-
             while (current) {
                 Node* next = current->next_free;
-            
                 delete current;
-            
                 current = next;
             }
-            
             free_list_head_ = nullptr;
         }
 
         void destroy_nodes(Node* node) noexcept {
             if (!node) return;
-
             std::vector<Node*> nodes_to_delete;
             nodes_to_delete.push_back(node);
-
             while(!nodes_to_delete.empty()) {
                 Node* current = nodes_to_delete.back();
-                
                 nodes_to_delete.pop_back();
-
                 Node* child = current->child;
-                
                 while (child) {
                     nodes_to_delete.push_back(child);
-                
                     child = child->sibling;
                 }
-                
                 delete current;
             }
         }
@@ -118,7 +106,7 @@ namespace cluster_approx {
             if (smaller->child) {
                 smaller->child->left_up = larger;
             }
-            
+
             smaller->child = larger;
 
             return smaller;
@@ -128,23 +116,19 @@ namespace cluster_approx {
             if (sub_heaps.empty()) {
                 return nullptr;
             }
-            
             if (sub_heaps.size() == 1) {
                 return sub_heaps[0];
             }
 
             size_t merge_end = 0;
-            
             for (size_t i = 0; i + 1 < sub_heaps.size(); i += 2) {
                 sub_heaps[merge_end++] = link(sub_heaps[i], sub_heaps[i + 1]);
             }
-            
             if (sub_heaps.size() % 2 != 0) {
                 sub_heaps[merge_end++] = sub_heaps.back();
             }
 
             Node* merged_root = sub_heaps[merge_end - 1];
-            
             for (size_t i = merge_end - 1; i > 0; --i) {
                 merged_root = link(sub_heaps[i - 1], merged_root);
             }
@@ -194,22 +178,17 @@ namespace cluster_approx {
         PairingHeap& operator=(PairingHeap&& other) noexcept {
             if (this != &other) {
                 release_memory();
-
                 root_ = other.root_;
                 free_list_head_ = other.free_list_head_;
-
                 other.root_ = nullptr;
                 other.free_list_head_ = nullptr;
             }
-         
             return *this;
         }
 
         void release_memory() noexcept {
             destroy_nodes(root_);
-        
             root_ = nullptr;
-        
             clear_free_list();
         }
 
@@ -219,12 +198,9 @@ namespace cluster_approx {
 
         [[nodiscard]] bool get_min(ValueType* value, PayloadType* payload) const {
              if (!root_) return false;
-
              assert(value != nullptr && payload != nullptr && "Output pointers cannot be null");
-
              *value = root_->value;
              *payload = root_->payload;
-
              return true;
         }
 
@@ -232,14 +208,12 @@ namespace cluster_approx {
             if (root_) {
                  return std::make_pair(root_->value, root_->payload);
             }
-
             return std::nullopt;
         }
 
         ItemHandle insert(ValueType value, PayloadType payload) {
             Node* new_node = allocate_node(value, std::move(payload));
             root_ = link(root_, new_node);
-
             return new_node;
         }
 
@@ -259,29 +233,21 @@ namespace cluster_approx {
             }
 
             if (node == root_) {
-                if (!(new_value <= root_->value)) {
-                    throw std::invalid_argument("New value must be less than or equal to current root value.");
+                 if (!(new_value <= root_->value)) {
+                    if (new_value > root_->value) {
+                       throw std::invalid_argument("New value must be less than or equal to current root value.");
+                    }
                 }
-
                 root_->value = new_value;
                 return;
             }
 
             if (!(new_value <= node->value)) {
-               assert(new_value <= node->value && "Decrease key 'to_value' should be <= node's internal value.");
+               assert(new_value <= node->value && "Decrease key 'to_value' should be <= node's internal (relative) value.");
             }
 
             node->value = new_value;
-            ValueType accumulated_offset = ValueType{};
-            Node* ancestor = node->left_up;
-
-            while (ancestor && ancestor != root_) {
-                 accumulated_offset += ancestor->child_offset;
-                 ancestor = ancestor->left_up;
-            }
-
             detach_node(node);
-
             root_ = link(root_, node);
         }
 
@@ -289,7 +255,6 @@ namespace cluster_approx {
             if (!root_) {
                 return false;
             }
-         
             assert(value != nullptr && payload != nullptr && "Output pointers cannot be null");
 
             Node* old_root = root_;
@@ -304,16 +269,12 @@ namespace cluster_approx {
                 current_child->child_offset += old_root->child_offset;
                 current_child->left_up = nullptr;
                 current_child->sibling = nullptr;
-
                 sub_heaps.push_back(current_child);
-                
                 current_child = next_sibling;
             }
 
             deallocate_node(old_root);
-
             root_ = merge_sub_heaps(sub_heaps);
-
             return true;
         }
 
@@ -324,14 +285,11 @@ namespace cluster_approx {
             if (heap1.free_list_head_) {
                 if (heap2.free_list_head_) {
                     Node* tail = heap1.free_list_head_;
-                    
                     while (tail->next_free) {
                         tail = tail->next_free;
                     }
-                    
                     tail->next_free = heap2.free_list_head_;
                 }
-                
                 result.free_list_head_ = heap1.free_list_head_;
             } else {
                 result.free_list_head_ = heap2.free_list_head_;
