@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ipruner.h"
+#include <vector>
+#include "pcst_fast.h"
 
 namespace cluster_approx {
     namespace internal {
