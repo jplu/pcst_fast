@@ -5,7 +5,9 @@
 #include <utility>
 #include <set>
 #include <queue>
+#include <tuple>
 #include "pcst_fast.h"
+#include "logger.h"
 
 namespace cluster_approx {
     namespace internal {
@@ -24,13 +26,16 @@ namespace cluster_approx {
                     }
                 };
 
+                using AdjacencyList = std::vector<std::vector<std::tuple<PCSTFast::IndexType,
+                                                                        PCSTFast::ValueType,
+                                                                        PCSTFast::IndexType>>>;
+
                 void build_full_adjacency(const PruningContext& context,
-                                          std::vector<std::vector<std::pair<PCSTFast::IndexType,
-                                          PCSTFast::ValueType>>>& adj) const;
+                                          AdjacencyList& adj) const;
 
                 void run_steiner_approximation(const PruningContext& context,
                                                const std::set<PCSTFast::IndexType>& target_nodes,
-                                               const std::vector<std::vector<std::pair<PCSTFast::IndexType, PCSTFast::ValueType>>>& adj,
+                                               const AdjacencyList& adj,
                                                std::set<PCSTFast::IndexType>& steiner_nodes_out,
                                                std::set<PCSTFast::IndexType>& steiner_edges_out
                                                );
