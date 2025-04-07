@@ -4,9 +4,9 @@
 #include <utility>
 #include <memory>
 #include <string>
-#include <cstdarg>
 
 #include "pcst_fast.h"
+#include "logger.h"
 
 namespace cluster_approx {
     namespace internal {
@@ -21,8 +21,7 @@ namespace cluster_approx {
             const std::vector<PCSTFast::InactiveMergeEvent>& inactive_merge_events;
             const std::vector<uint8_t>& node_good;
             const std::vector<int>& phase1_result;
-            const PCSTFast::Logger& logger;
-            int verbosity_level;
+            Logger& logger;
 
             PruningContext(
                 const std::vector<std::pair<PCSTFast::IndexType, PCSTFast::IndexType>>& edges_ref,
@@ -34,8 +33,7 @@ namespace cluster_approx {
                 const std::vector<PCSTFast::InactiveMergeEvent>& inactive_merge_events_ref,
                 const std::vector<uint8_t>& node_good_ref,
                 const std::vector<int>& phase1_result_ref,
-                const PCSTFast::Logger& logger_ref,
-                int verbosity
+                Logger& logger_ref
             ) : edges(edges_ref),
                 prizes(prizes_ref),
                 costs(costs_ref),
@@ -45,15 +43,8 @@ namespace cluster_approx {
                 inactive_merge_events(inactive_merge_events_ref),
                 node_good(node_good_ref),
                 phase1_result(phase1_result_ref),
-                logger(logger_ref),
-                verbosity_level(verbosity)
+                logger(logger_ref)
                 {}
-
-            void log(int level, const char* format, ...) const
-                #if defined(__GNUC__) || defined(__clang__)
-                    __attribute__ ((format (printf, 3, 4)))
-                #endif
-                ;
         };
 
     }
