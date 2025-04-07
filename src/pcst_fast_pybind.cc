@@ -224,6 +224,7 @@ PYBIND11_MODULE(pcst_fast, m) {
                            Options: "none", "simple", "gw", "strong", "connectfinal".
             verbosity_level (int, optional): Controls the amount of console output printed by the C++ module
                                              via the provided logger level.
+                                             -1: NO LOGS
                                              0: FATAL
                                              1: ERROR
                                              2: WARNING
@@ -231,7 +232,6 @@ PYBIND11_MODULE(pcst_fast, m) {
                                              4: DEBUG
                                              5: TRACE
                                              Higher values show more detail. Output goes to Python's stdout/stderr.
-                                             Default to 0.
 
         Returns:
             tuple[numpy.ndarray[int64], numpy.ndarray[int64]]: A pair containing:
