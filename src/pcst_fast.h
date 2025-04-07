@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <stdexcept>
 
+#include "logger.h"
 #include "pairing_heap.h"
 #include "priority_queue.h"
 
@@ -27,7 +28,6 @@ namespace cluster_approx {
             using ValueType = double;
             using IndexType = int;
             using PayloadType = int;
-            using Logger = std::function<void(int level, const std::string& message)>;
 
             enum class PruningMethod {
                 kNoPruning = 0,
@@ -123,8 +123,7 @@ namespace cluster_approx {
             PriorityQueueType clusters_next_edge_event_;
             ValueType current_time_ = 0.0;
             std::unique_ptr<internal::IPruner> pruner_;
-            Logger logger_;
-            const int verbosity_level_;
+            internal::Logger& logger_;
             std::vector<uint8_t> node_good_;
             std::vector<int> phase1_result_;
 
@@ -169,12 +168,6 @@ namespace cluster_approx {
             [[nodiscard]] IndexType find_representative_and_compress(IndexType start_node, ValueType& path_sum_out);
             void select_initial_active_clusters(std::vector<uint8_t>& node_good_flag);
 
-            void format_and_log(int level, const char* format, ...) const
-                #if defined(__GNUC__) || defined(__clang__)
-                    __attribute__ ((format (printf, 3, 4)))
-                #endif
-                ;
-
             [[nodiscard]] static constexpr PayloadType get_other_edge_part_index(PayloadType edge_part_index) {
                 return edge_part_index ^ 1;
             }
@@ -187,8 +180,7 @@ namespace cluster_approx {
                     IndexType root,
                     int target_num_active_clusters,
                     PruningMethod pruning,
-                    int verbosity_level,
-                    Logger logger = nullptr
+                    internal::Logger& logger
                     );
             ~PCSTFast();
             PCSTFast(const PCSTFast&) = delete;
