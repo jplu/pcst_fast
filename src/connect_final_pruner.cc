@@ -5,11 +5,11 @@
 #include <vector>
 #include <set>
 #include <queue>
-#include <map>
 #include <limits>
 #include <algorithm>
 #include <utility>
 #include <cassert>
+#include <tuple>
 
 namespace cluster_approx {
     namespace internal {
@@ -17,11 +17,18 @@ namespace cluster_approx {
         using internal::LogLevel;
 
         void ConnectFinalPruner::build_full_adjacency(const PruningContext& context,
-            std::vector<std::vector<std::pair<PCSTFast::IndexType, PCSTFast::ValueType>>>& adj) const
+            AdjacencyList& adj) const
         {
              context.logger.log(LogLevel::DEBUG, "ConnectFinalPruner::build_full_adjacency Entry.\n");
             size_t num_nodes = context.prizes.size();
             adj.assign(num_nodes, {});
+            if (!context.edges.empty()) {
+                size_t avg_degree_estimate = 2 * context.edges.size() / num_nodes + 1;
+                for(auto& neighbors : adj) {
+                    neighbors.reserve(avg_degree_estimate);
+                }
+            }
+
 
             for(size_t i=0; i < context.edges.size(); ++i) {
                  if (i >= context.costs.size()) {
@@ -30,8 +37,9 @@ namespace cluster_approx {
                  }
                 const auto& edge = context.edges[i];
                 if (static_cast<size_t>(edge.first) < num_nodes && static_cast<size_t>(edge.second) < num_nodes) {
-                    adj[edge.first].emplace_back(edge.second, context.costs[i]);
-                    adj[edge.second].emplace_back(edge.first, context.costs[i]);
+                    PCSTFast::IndexType edge_idx = static_cast<PCSTFast::IndexType>(i);
+                    adj[edge.first].emplace_back(edge.second, context.costs[i], edge_idx);
+                    adj[edge.second].emplace_back(edge.first, context.costs[i], edge_idx);
                 } else {
                     context.logger.log(LogLevel::WARNING, "Warning: Edge %zu connects out-of-bounds node (%d or %d).\n", i, edge.first, edge.second);
                 }
@@ -42,11 +50,13 @@ namespace cluster_approx {
         void ConnectFinalPruner::run_steiner_approximation(
             const PruningContext& context,
             const std::set<PCSTFast::IndexType>& target_nodes,
-            const std::vector<std::vector<std::pair<PCSTFast::IndexType, PCSTFast::ValueType>>>& adj,
+            const AdjacencyList& adj,
             std::set<PCSTFast::IndexType>& steiner_nodes_out,
             std::set<PCSTFast::IndexType>& steiner_edges_out
         ) {
              context.logger.log(LogLevel::INFO, "ConnectFinalPruner::run_steiner_approximation Entry. Targets=%zu\n", target_nodes.size());
+             const size_t num_nodes = context.prizes.size();
+
             steiner_nodes_out.clear();
             steiner_edges_out.clear();
 
@@ -65,14 +75,18 @@ namespace cluster_approx {
 
             while (!remaining_targets.empty()) {
                  context.logger.log(LogLevel::DEBUG, "  Steiner Iteration: %zu targets remaining.\n", remaining_targets.size());
-                pq = {};
-                std::map<PCSTFast::IndexType, PCSTFast::ValueType> dist;
-                std::map<PCSTFast::IndexType, std::pair<PCSTFast::IndexType, PCSTFast::IndexType>> parent_info;
+                 pq = {};
+                std::vector<PCSTFast::ValueType> dist(num_nodes, std::numeric_limits<PCSTFast::ValueType>::infinity());
+                std::vector<std::pair<PCSTFast::IndexType, PCSTFast::IndexType>> parent_info(
+                    num_nodes, {PCSTFast::kInvalidIndex, PCSTFast::kInvalidIndex});
 
-                for (PCSTFast::IndexType tree_node : steiner_nodes_out) {
+                 for (PCSTFast::IndexType tree_node : steiner_nodes_out) {
+                    if (static_cast<size_t>(tree_node) >= num_nodes) {
+                        context.logger.log(LogLevel::ERROR, "Error: Invalid node index %d from steiner_nodes_out during Dijkstra init.\n", tree_node);
+                        continue;
+                    }
                     dist[tree_node] = 0.0;
                     pq.push({0.0, tree_node, PCSTFast::kInvalidIndex});
-                    parent_info[tree_node] = {PCSTFast::kInvalidIndex, PCSTFast::kInvalidIndex};
                     context.logger.log(LogLevel::TRACE, "    Initializing PQ with node %d (dist 0).\n", tree_node);
                 }
 
@@ -83,9 +97,14 @@ namespace cluster_approx {
                     PQState current = pq.top(); pq.pop();
                     PCSTFast::IndexType u = current.node;
                     PCSTFast::ValueType d = current.distance;
-                     context.logger.log(LogLevel::TRACE, "    Dijkstra: Popped node %d (dist %.9g).\n", u, d);
+                    context.logger.log(LogLevel::TRACE, "    Dijkstra: Popped node %d (dist %.9g).\n", u, d);
 
-                    if (dist.count(u) && d > dist[u]) {
+                    if (static_cast<size_t>(u) >= num_nodes) {
+                        context.logger.log(LogLevel::ERROR, "Error: Invalid node index %d popped from PQ.\n", u);
+                        continue;
+                    }
+
+                    if (d > dist[u]) {
                          context.logger.log(LogLevel::TRACE, "      Skipping (already found shorter path %.9g).\n", dist[u]);
                         continue;
                     }
@@ -103,28 +122,23 @@ namespace cluster_approx {
                     }
 
                      if (static_cast<size_t>(u) < adj.size()) {
-                         for (size_t i = 0; i < context.edges.size(); ++i) {
-                             const auto& edge_pair = context.edges[i];
-                             PCSTFast::IndexType v = PCSTFast::kInvalidIndex;
-                             PCSTFast::ValueType cost = 0.0;
+                         for (const auto& edge_tuple : adj[u]) {
+                             PCSTFast::IndexType v = std::get<0>(edge_tuple);
+                             PCSTFast::ValueType cost = std::get<1>(edge_tuple);
+                             PCSTFast::IndexType edge_index = std::get<2>(edge_tuple);
 
-                             if (edge_pair.first == u) {
-                                 v = edge_pair.second;
-                                 if (i < context.costs.size()) cost = context.costs[i]; else continue;
-                             } else if (edge_pair.second == u) {
-                                 v = edge_pair.first;
-                                 if (i < context.costs.size()) cost = context.costs[i]; else continue;
-                             } else {
-                                 continue;
+                             if (static_cast<size_t>(v) >= num_nodes) {
+                                  context.logger.log(LogLevel::ERROR, "Error: Invalid neighbor index %d for node %d via edge %d.\n", v, u, edge_index);
+                                  continue;
                              }
 
                              PCSTFast::ValueType new_dist = d + cost;
 
-                             if (!dist.count(v) || new_dist < dist[v]) {
-                                     context.logger.log(LogLevel::TRACE, "      Updating neighbor %d: new_dist=%.9g (via edge %zu).\n", v, new_dist, i);
+                             if (new_dist < dist[v]) {
+                                     context.logger.log(LogLevel::TRACE, "      Updating neighbor %d: new_dist=%.9g (via edge %d).\n", v, new_dist, edge_index);
                                      dist[v] = new_dist;
-                                     parent_info[v] = {u, static_cast<PCSTFast::IndexType>(i)};
-                                     pq.push({new_dist, v, static_cast<PCSTFast::IndexType>(i)});
+                                     parent_info[v] = {u, edge_index};
+                                     pq.push({new_dist, v, edge_index});
                              }
                          }
                      }
@@ -134,7 +148,13 @@ namespace cluster_approx {
                     context.logger.log(LogLevel::INFO, "    Connecting closest target node %d (min dist %.9g) to Steiner tree.\n", closest_target_found, min_dist_to_target);
                     PCSTFast::IndexType curr = closest_target_found;
                     while (steiner_nodes_out.find(curr) == steiner_nodes_out.end()) {
-                        assert(parent_info.count(curr) && "Path reconstruction failed: parent info missing");
+                        if (static_cast<size_t>(curr) >= parent_info.size() || parent_info[curr].first == PCSTFast::kInvalidIndex) {
+                             context.logger.log(LogLevel::ERROR,"Error: Path reconstruction failed for node %d. Parent info missing or invalid.\n", curr);
+                             assert(false && "Path reconstruction failed");
+                             closest_target_found = PCSTFast::kInvalidIndex;
+                             break;
+                        }
+
                         PCSTFast::IndexType parent_node = parent_info[curr].first;
                         PCSTFast::IndexType edge_to_add = parent_info[curr].second;
                         assert(edge_to_add != PCSTFast::kInvalidIndex && "Path reconstruction failed: edge index missing");
@@ -148,12 +168,17 @@ namespace cluster_approx {
                             remaining_targets.erase(curr);
                         }
                         curr = parent_node;
-                        assert(curr != PCSTFast::kInvalidIndex && "Path reconstruction failed: hit invalid parent");
                     }
-                    context.logger.log(LogLevel::DEBUG,"      Path reconstruction complete. Connected to node %d in existing tree.\n", curr);
-                    remaining_targets.erase(closest_target_found);
+
+                    if (closest_target_found != PCSTFast::kInvalidIndex) {
+                         context.logger.log(LogLevel::DEBUG,"      Path reconstruction complete. Connected to node %d in existing tree.\n", curr);
+                         remaining_targets.erase(closest_target_found);
+                    } else {
+                         context.logger.log(LogLevel::ERROR, "Error: Steiner approximation failed during path reconstruction. Result may be incomplete.\n");
+                         break;
+                    }
                 } else {
-                     context.logger.log(LogLevel::WARNING,"Warning: Could not connect remaining targets (%zu). Steiner tree might be incomplete.\n", remaining_targets.size());
+                     context.logger.log(LogLevel::WARNING,"Warning: Could not connect remaining targets (%zu). Steiner tree might be incomplete (graph disconnected?).\n", remaining_targets.size());
                     break;
                 }
             }
@@ -167,12 +192,12 @@ namespace cluster_approx {
             std::vector<PCSTFast::IndexType>& result_edges)
         {
              context.logger.log(LogLevel::INFO, "Pruning: ConnectFinalComponents (Steiner Approx).\n");
-            result_nodes.clear();
-            result_edges.clear();
+             result_nodes.clear();
+             result_edges.clear();
 
             std::set<PCSTFast::IndexType> target_nodes_set;
             for(PCSTFast::IndexType i=0; i<static_cast<PCSTFast::IndexType>(context.prizes.size()); ++i) {
-                bool is_good = (static_cast<size_t>(i) < context.node_good.size() && context.node_good[i]);
+                bool is_good = (static_cast<size_t>(i) < context.node_good.size()) ? context.node_good[i] : false;
                  bool has_prize = context.prizes[i] > PCSTFast::kEpsilon;
 
                 if (is_good || has_prize) {
@@ -191,9 +216,9 @@ namespace cluster_approx {
                 context.logger.log(LogLevel::WARNING,"No target (good/prize/root) nodes found. Returning empty result.\n");
                 return;
             }
-            context.logger.log(LogLevel::WARNING, "Identified %zu target nodes to connect.\n", target_nodes_set.size());
+            context.logger.log(LogLevel::INFO, "Identified %zu target nodes to connect.\n", target_nodes_set.size());
 
-            std::vector<std::vector<std::pair<PCSTFast::IndexType, PCSTFast::ValueType>>> full_adj;
+            AdjacencyList full_adj;
             build_full_adjacency(context, full_adj);
 
             std::set<PCSTFast::IndexType> steiner_nodes_set;
