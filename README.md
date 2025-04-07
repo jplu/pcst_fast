@@ -14,7 +14,7 @@ The following paper contains details about the algorithm:
 
 Comparaison with the original version
 -------------------------------------
-Okay, here is a detailed report comparing the old and new versions of the codebase, focusing on the improvements made in the newer version.
+Here is a detailed report comparing the old and new versions of the codebase, focusing on the improvements made in the newer version:
 
 **Analysis of Improvements: Old vs. New Codebase**
 
