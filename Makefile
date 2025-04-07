@@ -5,7 +5,18 @@ SRCDIR = src
 OBJDIR = obj
 GTESTDIR = external/googletest/googletest
 
-CORE_SRCS = $(SRCDIR)/pcst_fast.cc $(SRCDIR)/pruning_strategy.cc
+CORE_SRCS = \
+	$(SRCDIR)/pcst_fast.cc \
+	$(SRCDIR)/pruning_context.cc \
+	$(SRCDIR)/ipruner.cc \
+	$(SRCDIR)/advanced_pruner_base.cc \
+	$(SRCDIR)/no_pruner.cc \
+	$(SRCDIR)/simple_pruner.cc \
+	$(SRCDIR)/gw_pruner.cc \
+	$(SRCDIR)/strong_pruner.cc \
+	$(SRCDIR)/connect_final_pruner.cc \
+	$(SRCDIR)/pruner_factory.cc
+
 TEST_SRCS = $(SRCDIR)/pcst_fast_test.cc
 PYBIND_SRCS = $(SRCDIR)/pcst_fast_pybind.cc
 GTEST_SRCS_ALL = $(GTESTDIR)/src/gtest-all.cc
@@ -29,7 +40,7 @@ $(PYBIND_OBJS): CXXFLAGS += $(PYTHON_CFLAGS)
 
 INCLUDES = -I $(SRCDIR) -I $(GTESTDIR)/include -I external/pybind11/include
 
-.PHONY: all clean test run_test pybind run_py_test
+.PHONY: all clean test pybind py_test
 
 all: $(TEST_TARGET) $(PYBIND_TARGET)
 
@@ -64,7 +75,7 @@ run_test: test
 
 pybind: $(PYBIND_TARGET)
 
-run_py_test: pybind
+py_test: pybind
 	@echo "Running Python tests..."
 	python -m pytest src/test_pcst_fast.py
 
