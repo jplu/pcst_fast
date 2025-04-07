@@ -7,7 +7,7 @@ GTESTDIR = external/googletest/googletest
 
 CORE_SRCS = \
 	$(SRCDIR)/pcst_fast.cc \
-	$(SRCDIR)/pruning_context.cc \
+	$(SRCDIR)/logger.cc \
 	$(SRCDIR)/ipruner.cc \
 	$(SRCDIR)/advanced_pruner_base.cc \
 	$(SRCDIR)/no_pruner.cc \
