@@ -124,7 +124,7 @@ Installation
 
 	Clone the repository and compile the python wrapper with the supplied makefile:
 
-	    make pcst_fast_py
+	    make pybind
 
 	You can then import the package via `import pcst_fast`.
 
