@@ -14,7 +14,7 @@ The following paper contains details about the algorithm:
 
 Comparaison with the original version
 -------------------------------------
-Here is a detailed report comparing the old and new versions of the codebase, focusing on the improvements made in the newer version:
+Here is a detailed report comparing the old and new version of the codebase:
 
 **Analysis of Improvements: Old vs. New Codebase**
 
@@ -135,18 +135,55 @@ The `pcst_fast` package contains the following function:
 
     vertices, edges = pcst_fast(edges, prizes, costs, root, num_clusters, pruning, verbosity_level)
 
-The parameters are:
-* `edges`: a 2D int64 array. Each row (of length 2) specifies an undirected edge in the input graph. The nodes are labeled 0 to n-1, where n is the number of nodes.
-* `prizes`: the node prizes as a 1D float64 array.
-* `costs`: the edge costs as a 1D float64 array.
-* `root`: the root note for rooted PCST. For the unrooted variant, this parameter should be -1.
-* `num_clusters`: the number of connected components in the output.
-* `pruning`: a string value indicating the pruning method. Possible values are `'none'`, `'simple'`, `'gw'`, and `'strong'` (all literals are case-insensitive). `'none'` and `'simple'` return intermediate stages of the algorithm and do not have approximation guarantees. They are only intended for development. The standard GW pruning method is `'gw'`, which is also the default. `'strong'` uses "strong pruning", which was introduced in [\[JMP00\]](http://dl.acm.org/citation.cfm?id=338637). It has the same theoretical guarantees as GW pruning but better empirical performance in some cases. For the PCSF problem, the output of strong pruning is at least as good as the output of GW pruning.
-* `verbosity_level`: an integer indicating how much debug output the function should produce.
+Runs the Prize-Collecting Steiner Forest algorithm (Fast C++ Implementation). Releases the Python Global Interpreter Lock (GIL) during C++ execution.
 
-The output variables are:
-* `vertices`: the vertices in the solution as a 1D int64 array.
-* `edges`: the edges in the output as a 1D int64 array. The list contains indices into the list of edges passed into the function.
+Finds a forest (or tree if rooted) connecting subsets of terminals (nodes with
+positive prizes) that maximizes the total prize of connected terminals minus
+the total cost of edges used, subject to constraints on the number of trees
+and potentially requiring a specific root node.
+
+Args:
+* edges (numpy.ndarray[int64]): Array of shape (num_edges, 2) listing undirected edges
+									using 0-based node indices. Must be C-contiguous.
+									Indices must fit within a 32-bit signed integer.
+* prizes (numpy.ndarray[float64]): Array of shape (num_nodes,) listing non-negative node prizes.
+										Must be C-contiguous.
+* costs (numpy.ndarray[float64]): Array of shape (num_edges,) listing non-negative edge costs.
+									Must be C-contiguous.
+* root (int): The root node index for the rooted variant (PCSTree).
+				Use -1 or any negative value for the unrooted variant (PCSForest).
+				Must be less than num_nodes if non-negative.
+* num_clusters (int): The target number of trees (connected components) in the output forest.
+						For the rooted variant (root >= 0), this is typically 1 (or 0 internally),
+						resulting in a single tree containing the root. If set > 1 for rooted,
+						a warning is printed and it's treated as 1 (0 internally).
+						For the unrooted variant (root < 0), this must be positive.
+* pruning (str): The pruning method to apply after the main algorithm phase to potentially
+					improve the solution quality or enforce structure.
+					Options: "none", "simple", "gw", "strong", "connectfinal".
+* verbosity_level (int, optional): Controls the maximum level of messages printed by the C++ module.
+										Higher values show more detail. Output goes to Python's stdout/stderr via print(). Defaults to -1 (NONE).
+	* -1: NONE (No output except Python warnings/errors, Default)
+	* 0: FATAL
+	* 1: ERROR
+	* 2: WARNING
+	* 3: INFO
+	* 4: DEBUG
+	* 5: TRACE
+
+Returns:
+* tuple[numpy.ndarray[int64], numpy.ndarray[int64]]: A pair containing:
+	* nodes: A 1D numpy array of selected node indices (int64) present in the solution forest. Sorted.
+	* edges: A 1D numpy array of selected edge indices (int64), corresponding to the
+					indices in the input "costs" and "edges" arrays, forming the solution forest. Sorted.
+
+Raises:
+* ValueError: If input arrays have incorrect shapes, dimensions, or types; if num_clusters
+				is invalid for the rooted/unrooted case; if costs/prizes are negative;
+				if the pruning string is not recognized; or if input
+				indices are too large for internal 32-bit representation.
+* IndexError: If node indices in "edges" or the "root" index are out of the valid range [0, num_nodes).
+* RuntimeError: If the underlying C++ algorithm encounters an internal error or fails to run successfully. Check logged output.
 
 Performance
 -----------
