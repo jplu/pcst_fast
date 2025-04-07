@@ -19,6 +19,7 @@
 namespace cluster_approx {
     namespace internal {
         class IPruner;
+        struct PruningContext;
     }
 
     class PCSTFast {
@@ -197,4 +198,9 @@ namespace cluster_approx {
             [[nodiscard]] bool run(std::vector<IndexType>* result_nodes, std::vector<IndexType>* result_edges);
             void get_statistics(Statistics* s) const;
     };
+
+    namespace internal {
+         std::unique_ptr<IPruner> create_pruner(PCSTFast::PruningMethod method);
+    }
+
 }
