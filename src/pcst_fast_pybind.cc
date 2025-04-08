@@ -73,7 +73,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
         int internal_target_num_active_clusters = num_clusters;
 
         if (root >= 0) {
-            if (num_clusters != 1 && num_clusters != 0) {
+            if (num_clusters != 1 && num_clusters != 0 && verbosity_level >= 2) {
                 py::print("Warning: num_clusters parameter is typically 1 (or 0 internally) for rooted PCST.", py::arg("flush")=true);
             }
             internal_target_num_active_clusters = 0;
@@ -132,7 +132,7 @@ std::pair<py::array_t<int64_t>, py::array_t<int64_t>> pcst_fast_pybind(
                     std::to_string(num_nodes) + ")."
                 );
             }
-             if (u == v) {
+             if (u == v && verbosity_level >= 2) {
                  py::print("Warning: Input edge list contains self-loop for node " + std::to_string(u) + " at edge index " + std::to_string(i) +". It will be ignored.", py::arg("flush") = true);
              }
 
