@@ -8,6 +8,7 @@
     pkgs.glibc
     pkgs.python3
     pkgs.uv
+    pkgs.direnv
   ];
 
   env = {};
@@ -42,6 +43,17 @@
           else
             echo "WARNING: pyproject.toml not found. Skipping dependency installation."
           fi
+        '';
+
+        setup-direnv = ''
+          echo "Setting up .envrc for direnv..."
+          if [ ! -f ".envrc" ]; then
+            echo "source_env_if_exists .envrc.local" > .envrc
+            echo ".envrc created."
+          else
+            echo ".envrc already exists, skipping creation."
+          fi
+          direnv allow .
         '';
       };
 

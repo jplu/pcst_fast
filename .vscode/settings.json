@@ -1,4 +1,6 @@
 {
     "IDX.aI.enableInlineCompletion": true,
-    "IDX.aI.enableCodebaseIndexing": true
+    "IDX.aI.enableCodebaseIndexing": true,
+    "python.envFile": ".env.local",
+    "python.defaultInterpreterPath": ".venv/bin/python"
 }
