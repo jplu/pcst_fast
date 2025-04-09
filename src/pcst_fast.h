@@ -97,7 +97,7 @@ namespace cluster_approx {
 
             static constexpr IndexType kNoRoot = -1;
             static constexpr IndexType kInvalidIndex = -1;
-            static constexpr ValueType kEpsilon = 1e-9;
+            static constexpr ValueType kEpsilon = 1e-6;
 
         private:
             using PairingHeapType = PairingHeap<ValueType, PayloadType>;
