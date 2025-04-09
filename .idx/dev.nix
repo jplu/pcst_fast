@@ -1,62 +1,60 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://developers.google.com/idx/guides/customize-idx-env
 { pkgs, ... }: {
-  # Which nixpkgs channel to use.
-  channel = "stable-24.05"; # or "unstable"
+  channel = "stable-24.05";
 
-  # Use https://search.nixos.org/packages to find packages
   packages = [
-      pkgs.gnumake
+    pkgs.gnumake
     pkgs.binutils
     pkgs.gcc
     pkgs.glibc
     pkgs.python3
-    pkgs.python3Packages.pip
-    # pkgs.go
-    # pkgs.python311
-    # pkgs.python311Packages.pip
-    # pkgs.nodejs_20
-    # pkgs.nodePackages.nodemon
+    pkgs.uv
   ];
 
-  # Sets environment variables in the workspace
   env = {};
+
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
-      # "vscodevim.vim"
+      "ms-python.python"
+      "ms-vscode.cpptools"
+      "ms-vscode.makefile-tools"
     ];
 
-    # Enable previews
     previews = {
       enable = true;
       previews = {
-        # web = {
-        #   # Example: run "npm run dev" with PORT set to IDX's defined port for previews,
-        #   # and show it in IDX's web preview panel
-        #   command = ["npm" "run" "dev"];
-        #   manager = "web";
-        #   env = {
-        #     # Environment variables to set for your server
-        #     PORT = "$PORT";
-        #   };
-        # };
+        
       };
     };
 
     # Workspace lifecycle hooks
     workspace = {
-      # Runs when a workspace is first created
       onCreate = {
-        install-python-deps = "pip install datasets==3.5.0 torch-geometric==2.6.1 vertexai==1.71.1 s3fs==2024.12.0 s3path==0.6.1 s3torchconnector==1.3.2 --break-system-packages";
-        # Example: install JS dependencies from NPM
-        # npm-install = "npm install";
+        create-python-venv = ''
+          echo "Creating Python virtual environment (.venv)..."
+          # Only create if it doesn't exist, or update if needed
+          python -m venv .venv
+          echo "Virtual environment created/updated."
+        '';
+
+        install-deps-uv = ''
+          echo "Installing dependencies using uv from existing pyproject.toml..."
+          if [ -f "pyproject.toml" ]; then
+            # uv should automatically detect the .venv and pyproject.toml
+            uv pip sync
+            echo "Dependencies installed/synced."
+          else
+            echo "WARNING: pyproject.toml not found. Skipping dependency installation."
+          fi
+        '';
       };
-      # Runs when the workspace is (re)started
+
       onStart = {
-        # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
+        activate-venv-hint = "echo 'Hint: Run \`source .venv/bin/activate\` to use the Python virtual environment.'"
       };
     };
+  };
+
+  settings = {
+    "python.defaultInterpreterPath" = ".venv/bin/python"
   };
 }
