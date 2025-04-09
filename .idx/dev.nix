@@ -48,7 +48,7 @@
     workspace = {
       # Runs when a workspace is first created
       onCreate = {
-        install-python-deps = "pip install datasets==3.5.0 torch-geometric==2.6.1 vertexai==1.71.1 s3fs==2024.12.0 s3path==0.6.1 s3torchconnector==1.3.2";
+        install-python-deps = "pip install datasets==3.5.0 torch-geometric==2.6.1 vertexai==1.71.1 s3fs==2024.12.0 s3path==0.6.1 s3torchconnector==1.3.2 --break-system-packages";
         # Example: install JS dependencies from NPM
         # npm-install = "npm install";
       };
