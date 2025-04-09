@@ -6,7 +6,12 @@
 
   # Use https://search.nixos.org/packages to find packages
   packages = [
-    pkgs.gnumake42
+      pkgs.gnumake
+    pkgs.binutils
+    pkgs.gcc
+    pkgs.glibc
+    pkgs.python3
+    pkgs.python3Packages.pip
     # pkgs.go
     # pkgs.python311
     # pkgs.python311Packages.pip
@@ -43,6 +48,7 @@
     workspace = {
       # Runs when a workspace is first created
       onCreate = {
+        install-python-deps = "python3 -m pip install datasets==3.5.0 torch-geometric==2.6.1 vertexai==1.71.1 s3fs==2024.12.0 s3path==0.6.1 s3torchconnector==1.3.2";
         # Example: install JS dependencies from NPM
         # npm-install = "npm install";
       };
