@@ -49,12 +49,12 @@
       };
 
       onStart = {
-        activate-venv-hint = "echo 'Hint: Run \`source .venv/bin/activate\` to use the Python virtual environment.'"
+        activate-venv-hint = "echo 'Hint: Run \`source .venv/bin/activate\` to use the Python virtual environment.'";
       };
     };
   };
 
   settings = {
-    "python.defaultInterpreterPath" = ".venv/bin/python"
+    "python.defaultInterpreterPath" = ".venv/bin/python";
   };
 }
