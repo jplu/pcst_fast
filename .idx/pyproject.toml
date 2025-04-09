@@ -1,0 +1,16 @@
+[project]
+name = "pcst_fast_test"
+version = "0.1.0"
+description = "Python env to test pcst_fast"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets==3.5.0",
+    "torch-geometric==2.6.1",
+    "s3fs==2024.12.0",
+    "s3path==0.6.1",
+    "s3torchconnector==1.3.2"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
