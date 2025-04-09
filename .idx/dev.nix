@@ -38,7 +38,7 @@
         install-deps-uv = ''
           echo "Installing dependencies using uv from existing pyproject.toml..."
           if [ -f "pyproject.toml" ]; then
-            uv pip sync pyproject.toml
+            uv pip install -y pyproject.toml
             echo "Dependencies installed/synced."
           else
             echo "WARNING: pyproject.toml not found. Skipping dependency installation."

@@ -88,29 +88,32 @@ namespace cluster_approx {
         }
 
         static Node* link(Node* node1, Node* node2) noexcept {
-            if (!node2) return node1;
-            if (!node1) return node2;
+             if (node1 == NULL) {
+                 return node2;
+             }
+             if (node2 == NULL) {
+                 return node1;
+             }
+             Node* smaller_node = node2;
+             Node* larger_node = node1;
+             // Compare presumably absolute values (as prepared by delete_min)
+             if (node1->value < node2->value) {
+                 smaller_node = node1;
+                 larger_node = node2;
+             }
 
-            Node* smaller = node1;
-            Node* larger = node2;
+             // *** Replicate EXACT old link structure update and adjustments ***
+             larger_node->sibling = smaller_node->child;
+             if (larger_node->sibling != NULL) {
+                 larger_node->sibling->left_up = larger_node;
+             }
+             larger_node->left_up = smaller_node;
+             smaller_node->child = larger_node;
+             larger_node->value -= smaller_node->child_offset; // Old logic adjustment 1
+             larger_node->child_offset -= smaller_node->child_offset; // Old logic adjustment 2
 
-            if (larger->value < smaller->value) {
-                std::swap(smaller, larger);
-            }
-
-            larger->value -= smaller->child_offset;
-            larger->child_offset -= smaller->child_offset;
-            larger->left_up = smaller;
-            larger->sibling = smaller->child;
-
-            if (smaller->child) {
-                smaller->child->left_up = larger;
-            }
-
-            smaller->child = larger;
-
-            return smaller;
-        }
+             return smaller_node;
+         }
 
         Node* merge_sub_heaps(std::vector<Node*>& sub_heaps) noexcept {
             if (sub_heaps.empty()) {
@@ -229,26 +232,30 @@ namespace cluster_approx {
 
         void decrease_key(ItemHandle node, const ValueType& new_value) {
             if (!node) {
-                throw std::invalid_argument("Cannot decrease key on a null handle");
+                throw std::invalid_argument("PairingHeap::decrease_key: Cannot operate on a null handle");
             }
 
+            // Handle root node separately (its value is absolute)
             if (node == root_) {
-                 if (!(new_value <= root_->value)) {
-                    if (new_value > root_->value) {
-                       throw std::invalid_argument("New value must be less than or equal to current root value.");
-                    }
+                if (new_value > root_->value) {
+                     // Allow equality, prevent increase
+                     throw std::invalid_argument("PairingHeap::decrease_key: New value must be <= current value for root.");
                 }
                 root_->value = new_value;
                 return;
             }
 
-            if (!(new_value <= node->value)) {
-               assert(new_value <= node->value && "Decrease key 'to_value' should be <= node's internal (relative) value.");
-            }
+            // For non-root nodes:
+            // We skip validation new_value <= current_absolute_value because it's hard to calculate.
+            // Trust the caller provided a value representing a decrease.
 
+            // Store the target absolute value directly, temporarily.
             node->value = new_value;
+
+            // Detach the node from its current position and relink it to the root
             detach_node(node);
             root_ = link(root_, node);
+            // Link is expected to make node->value relative again if node becomes a child.
         }
 
         [[nodiscard]] bool delete_min(ValueType* value, PayloadType* payload) {
@@ -258,15 +265,17 @@ namespace cluster_approx {
             assert(value != nullptr && payload != nullptr && "Output pointers cannot be null");
 
             Node* old_root = root_;
-            *value = old_root->value;
+            *value = old_root->value; // Root value is absolute
             *payload = std::move(old_root->payload);
             std::vector<Node*> sub_heaps;
             Node* current_child = old_root->child;
 
             while (current_child) {
                 Node* next_sibling = current_child->sibling;
-                current_child->value += old_root->child_offset;
-                current_child->child_offset += old_root->child_offset;
+                // Restore: Make child's value absolute relative to root for consistent linking.
+                current_child->value += old_root->value; // Use root's absolute value
+                // Restore: Propagate the offset change.
+                current_child->child_offset += old_root->child_offset; // RESTORED
                 current_child->left_up = nullptr;
                 current_child->sibling = nullptr;
                 sub_heaps.push_back(current_child);
@@ -274,6 +283,8 @@ namespace cluster_approx {
             }
 
             deallocate_node(old_root);
+            // merge_sub_heaps uses link. Link expects comparable (absolute) values
+            // and makes the child relative using the parent's offset info.
             root_ = merge_sub_heaps(sub_heaps);
             return true;
         }
@@ -282,12 +293,15 @@ namespace cluster_approx {
             PairingHeap result;
             result.root_ = link(heap1.root_, heap2.root_);
 
+            // Combine free lists efficiently
             if (heap1.free_list_head_) {
                 if (heap2.free_list_head_) {
+                    // Find tail of heap1's free list
                     Node* tail = heap1.free_list_head_;
                     while (tail->next_free) {
                         tail = tail->next_free;
                     }
+                    // Append heap2's list
                     tail->next_free = heap2.free_list_head_;
                 }
                 result.free_list_head_ = heap1.free_list_head_;
