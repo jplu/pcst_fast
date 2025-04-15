@@ -4,8 +4,8 @@ Chrono
 When including the additional header file :file:`pybind11/chrono.h` conversions
 from C++11 chrono datatypes to python datetime objects are automatically enabled.
 This header also enables conversions of python floats (often from sources such
-as `time.monotonic()`, `time.perf_counter()` and `time.process_time()`) into
-durations.
+as ``time.monotonic()``, ``time.perf_counter()`` and ``time.process_time()``)
+into durations.
 
 An overview of clocks in C++11
 ------------------------------
@@ -59,7 +59,7 @@ Provided conversions
 
 .. rubric:: Python to C++
 
-- ``datetime.datetime`` → ``std::chrono::system_clock::time_point``
+- ``datetime.datetime`` or ``datetime.date`` or ``datetime.time`` → ``std::chrono::system_clock::time_point``
     Date/time objects are converted into system clock timepoints. Any
     timezone information is ignored and the type is treated as a naive
     object.

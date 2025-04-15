@@ -50,44 +50,44 @@ namespace internal {
 // assigned to a tr1::function<F>).
 template <typename FunctionImpl>
 class InvokeAction {
- public:
-  // The c'tor makes a copy of function_impl (either a function
-  // pointer or a functor).
-  explicit InvokeAction(FunctionImpl function_impl)
-      : function_impl_(function_impl) {}
+  public:
+    // The c'tor makes a copy of function_impl (either a function
+    // pointer or a functor).
+    explicit InvokeAction(FunctionImpl function_impl)
+        : function_impl_(function_impl) {}
 
-  template <typename Result, typename ArgumentTuple>
-  Result Perform(const ArgumentTuple& args) {
-    return InvokeHelper<Result, ArgumentTuple>::Invoke(function_impl_, args);
-  }
+    template <typename Result, typename ArgumentTuple>
+    Result Perform(const ArgumentTuple& args) {
+        return InvokeHelper<Result, ArgumentTuple>::Invoke(function_impl_, args);
+    }
 
- private:
-  FunctionImpl function_impl_;
+  private:
+    FunctionImpl function_impl_;
 
-  GTEST_DISALLOW_ASSIGN_(InvokeAction);
+    GTEST_DISALLOW_ASSIGN_(InvokeAction);
 };
 
 // Implements the Invoke(object_ptr, &Class::Method) action.
 template <class Class, typename MethodPtr>
 class InvokeMethodAction {
- public:
-  InvokeMethodAction(Class* obj_ptr, MethodPtr method_ptr)
-      : method_ptr_(method_ptr), obj_ptr_(obj_ptr) {}
+  public:
+    InvokeMethodAction(Class* obj_ptr, MethodPtr method_ptr)
+        : method_ptr_(method_ptr), obj_ptr_(obj_ptr) {}
 
-  template <typename Result, typename ArgumentTuple>
-  Result Perform(const ArgumentTuple& args) const {
-    return InvokeHelper<Result, ArgumentTuple>::InvokeMethod(
-        obj_ptr_, method_ptr_, args);
-  }
+    template <typename Result, typename ArgumentTuple>
+    Result Perform(const ArgumentTuple& args) const {
+        return InvokeHelper<Result, ArgumentTuple>::InvokeMethod(
+                   obj_ptr_, method_ptr_, args);
+    }
 
- private:
-  // The order of these members matters.  Reversing the order can trigger
-  // warning C4121 in MSVC (see
-  // http://computer-programming-forum.com/7-vc.net/6fbc30265f860ad1.htm ).
-  const MethodPtr method_ptr_;
-  Class* const obj_ptr_;
+  private:
+    // The order of these members matters.  Reversing the order can trigger
+    // warning C4121 in MSVC (see
+    // http://computer-programming-forum.com/7-vc.net/6fbc30265f860ad1.htm ).
+    const MethodPtr method_ptr_;
+    Class* const obj_ptr_;
 
-  GTEST_DISALLOW_ASSIGN_(InvokeMethodAction);
+    GTEST_DISALLOW_ASSIGN_(InvokeMethodAction);
 };
 
 // An internal replacement for std::copy which mimics its behavior. This is
@@ -98,10 +98,10 @@ template<typename InputIterator, typename OutputIterator>
 inline OutputIterator CopyElements(InputIterator first,
                                    InputIterator last,
                                    OutputIterator output) {
-  for (; first != last; ++first, ++output) {
-    *output = *first;
-  }
-  return output;
+    for (; first != last; ++first, ++output) {
+        *output = *first;
+    }
+    return output;
 }
 
 }  // namespace internal
@@ -113,8 +113,8 @@ inline OutputIterator CopyElements(InputIterator first,
 template <typename FunctionImpl>
 PolymorphicAction<internal::InvokeAction<FunctionImpl> > Invoke(
     FunctionImpl function_impl) {
-  return MakePolymorphicAction(
-      internal::InvokeAction<FunctionImpl>(function_impl));
+    return MakePolymorphicAction(
+               internal::InvokeAction<FunctionImpl>(function_impl));
 }
 
 // Creates an action that invokes the given method on the given object
@@ -122,8 +122,8 @@ PolymorphicAction<internal::InvokeAction<FunctionImpl> > Invoke(
 template <class Class, typename MethodPtr>
 PolymorphicAction<internal::InvokeMethodAction<Class, MethodPtr> > Invoke(
     Class* obj_ptr, MethodPtr method_ptr) {
-  return MakePolymorphicAction(
-      internal::InvokeMethodAction<Class, MethodPtr>(obj_ptr, method_ptr));
+    return MakePolymorphicAction(
+               internal::InvokeMethodAction<Class, MethodPtr>(obj_ptr, method_ptr));
 }
 
 // WithoutArgs(inner_action) can be used in a mock function with a
@@ -133,7 +133,7 @@ PolymorphicAction<internal::InvokeMethodAction<Class, MethodPtr> > Invoke(
 template <typename InnerAction>
 inline internal::WithArgsAction<InnerAction>
 WithoutArgs(const InnerAction& action) {
-  return internal::WithArgsAction<InnerAction>(action);
+    return internal::WithArgsAction<InnerAction>(action);
 }
 
 // WithArg<k>(an_action) creates an action that passes the k-th
@@ -144,7 +144,7 @@ WithoutArgs(const InnerAction& action) {
 template <int k, typename InnerAction>
 inline internal::WithArgsAction<InnerAction, k>
 WithArg(const InnerAction& action) {
-  return internal::WithArgsAction<InnerAction, k>(action);
+    return internal::WithArgsAction<InnerAction, k>(action);
 }
 
 // The ACTION*() macros trigger warning C4100 (unreferenced formal
@@ -161,7 +161,7 @@ WithArg(const InnerAction& action) {
 ACTION_TEMPLATE(ReturnArg,
                 HAS_1_TEMPLATE_PARAMS(int, k),
                 AND_0_VALUE_PARAMS()) {
-  return ::testing::get<k>(args);
+    return ::testing::get<k>(args);
 }
 
 // Action SaveArg<k>(pointer) saves the k-th (0-based) argument of the
@@ -169,7 +169,7 @@ ACTION_TEMPLATE(ReturnArg,
 ACTION_TEMPLATE(SaveArg,
                 HAS_1_TEMPLATE_PARAMS(int, k),
                 AND_1_VALUE_PARAMS(pointer)) {
-  *pointer = ::testing::get<k>(args);
+    *pointer = ::testing::get<k>(args);
 }
 
 // Action SaveArgPointee<k>(pointer) saves the value pointed to
@@ -177,7 +177,7 @@ ACTION_TEMPLATE(SaveArg,
 ACTION_TEMPLATE(SaveArgPointee,
                 HAS_1_TEMPLATE_PARAMS(int, k),
                 AND_1_VALUE_PARAMS(pointer)) {
-  *pointer = *::testing::get<k>(args);
+    *pointer = *::testing::get<k>(args);
 }
 
 // Action SetArgReferee<k>(value) assigns 'value' to the variable
@@ -185,13 +185,13 @@ ACTION_TEMPLATE(SaveArgPointee,
 ACTION_TEMPLATE(SetArgReferee,
                 HAS_1_TEMPLATE_PARAMS(int, k),
                 AND_1_VALUE_PARAMS(value)) {
-  typedef typename ::testing::tuple_element<k, args_type>::type argk_type;
-  // Ensures that argument #k is a reference.  If you get a compiler
-  // error on the next line, you are using SetArgReferee<k>(value) in
-  // a mock function whose k-th (0-based) argument is not a reference.
-  GTEST_COMPILE_ASSERT_(internal::is_reference<argk_type>::value,
-                        SetArgReferee_must_be_used_with_a_reference_argument);
-  ::testing::get<k>(args) = value;
+    typedef typename ::testing::tuple_element<k, args_type>::type argk_type;
+    // Ensures that argument #k is a reference.  If you get a compiler
+    // error on the next line, you are using SetArgReferee<k>(value) in
+    // a mock function whose k-th (0-based) argument is not a reference.
+    GTEST_COMPILE_ASSERT_(internal::is_reference<argk_type>::value,
+                          SetArgReferee_must_be_used_with_a_reference_argument);
+    ::testing::get<k>(args) = value;
 }
 
 // Action SetArrayArgument<k>(first, last) copies the elements in
@@ -202,11 +202,11 @@ ACTION_TEMPLATE(SetArgReferee,
 ACTION_TEMPLATE(SetArrayArgument,
                 HAS_1_TEMPLATE_PARAMS(int, k),
                 AND_2_VALUE_PARAMS(first, last)) {
-  // Visual Studio deprecates ::std::copy, so we use our own copy in that case.
+    // Visual Studio deprecates ::std::copy, so we use our own copy in that case.
 #ifdef _MSC_VER
-  internal::CopyElements(first, last, ::testing::get<k>(args));
+    internal::CopyElements(first, last, ::testing::get<k>(args));
 #else
-  ::std::copy(first, last, ::testing::get<k>(args));
+    ::std::copy(first, last, ::testing::get<k>(args));
 #endif
 }
 
@@ -215,11 +215,13 @@ ACTION_TEMPLATE(SetArrayArgument,
 ACTION_TEMPLATE(DeleteArg,
                 HAS_1_TEMPLATE_PARAMS(int, k),
                 AND_0_VALUE_PARAMS()) {
-  delete ::testing::get<k>(args);
+    delete ::testing::get<k>(args);
 }
 
 // This action returns the value pointed to by 'pointer'.
-ACTION_P(ReturnPointee, pointer) { return *pointer; }
+ACTION_P(ReturnPointee, pointer) {
+    return *pointer;
+}
 
 // Action Throw(exception) can be used in a mock function of any type
 // to throw the given exception.  Any copyable value can be thrown.
@@ -230,7 +232,9 @@ ACTION_P(ReturnPointee, pointer) { return *pointer; }
 #  pragma warning(push)          // Saves the current warning state.
 #  pragma warning(disable:4702)  // Temporarily disables warning 4702.
 # endif
-ACTION_P(Throw, exception) { throw exception; }
+ACTION_P(Throw, exception) {
+    throw exception;
+}
 # ifdef _MSC_VER
 #  pragma warning(pop)           // Restores the warning state.
 # endif

@@ -88,11 +88,11 @@ AssertionResult AssertPred1Helper(const char* pred_text,
                                   const char* e1,
                                   Pred pred,
                                   const T1& v1) {
-  if (pred(v1)) return AssertionSuccess();
+    if (pred(v1)) return AssertionSuccess();
 
-  return AssertionFailure() << pred_text << "("
-                            << e1 << ") evaluates to false, where"
-                            << "\n" << e1 << " evaluates to " << v1;
+    return AssertionFailure() << pred_text << "("
+           << e1 << ") evaluates to false, where"
+           << "\n" << e1 << " evaluates to " << v1;
 }
 
 // Internal macro for implementing {EXPECT|ASSERT}_PRED_FORMAT1.
@@ -132,13 +132,13 @@ AssertionResult AssertPred2Helper(const char* pred_text,
                                   Pred pred,
                                   const T1& v1,
                                   const T2& v2) {
-  if (pred(v1, v2)) return AssertionSuccess();
+    if (pred(v1, v2)) return AssertionSuccess();
 
-  return AssertionFailure() << pred_text << "("
-                            << e1 << ", "
-                            << e2 << ") evaluates to false, where"
-                            << "\n" << e1 << " evaluates to " << v1
-                            << "\n" << e2 << " evaluates to " << v2;
+    return AssertionFailure() << pred_text << "("
+           << e1 << ", "
+           << e2 << ") evaluates to false, where"
+           << "\n" << e1 << " evaluates to " << v1
+           << "\n" << e2 << " evaluates to " << v2;
 }
 
 // Internal macro for implementing {EXPECT|ASSERT}_PRED_FORMAT2.
@@ -183,15 +183,15 @@ AssertionResult AssertPred3Helper(const char* pred_text,
                                   const T1& v1,
                                   const T2& v2,
                                   const T3& v3) {
-  if (pred(v1, v2, v3)) return AssertionSuccess();
+    if (pred(v1, v2, v3)) return AssertionSuccess();
 
-  return AssertionFailure() << pred_text << "("
-                            << e1 << ", "
-                            << e2 << ", "
-                            << e3 << ") evaluates to false, where"
-                            << "\n" << e1 << " evaluates to " << v1
-                            << "\n" << e2 << " evaluates to " << v2
-                            << "\n" << e3 << " evaluates to " << v3;
+    return AssertionFailure() << pred_text << "("
+           << e1 << ", "
+           << e2 << ", "
+           << e3 << ") evaluates to false, where"
+           << "\n" << e1 << " evaluates to " << v1
+           << "\n" << e2 << " evaluates to " << v2
+           << "\n" << e3 << " evaluates to " << v3;
 }
 
 // Internal macro for implementing {EXPECT|ASSERT}_PRED_FORMAT3.
@@ -241,17 +241,17 @@ AssertionResult AssertPred4Helper(const char* pred_text,
                                   const T2& v2,
                                   const T3& v3,
                                   const T4& v4) {
-  if (pred(v1, v2, v3, v4)) return AssertionSuccess();
+    if (pred(v1, v2, v3, v4)) return AssertionSuccess();
 
-  return AssertionFailure() << pred_text << "("
-                            << e1 << ", "
-                            << e2 << ", "
-                            << e3 << ", "
-                            << e4 << ") evaluates to false, where"
-                            << "\n" << e1 << " evaluates to " << v1
-                            << "\n" << e2 << " evaluates to " << v2
-                            << "\n" << e3 << " evaluates to " << v3
-                            << "\n" << e4 << " evaluates to " << v4;
+    return AssertionFailure() << pred_text << "("
+           << e1 << ", "
+           << e2 << ", "
+           << e3 << ", "
+           << e4 << ") evaluates to false, where"
+           << "\n" << e1 << " evaluates to " << v1
+           << "\n" << e2 << " evaluates to " << v2
+           << "\n" << e3 << " evaluates to " << v3
+           << "\n" << e4 << " evaluates to " << v4;
 }
 
 // Internal macro for implementing {EXPECT|ASSERT}_PRED_FORMAT4.
@@ -306,19 +306,19 @@ AssertionResult AssertPred5Helper(const char* pred_text,
                                   const T3& v3,
                                   const T4& v4,
                                   const T5& v5) {
-  if (pred(v1, v2, v3, v4, v5)) return AssertionSuccess();
+    if (pred(v1, v2, v3, v4, v5)) return AssertionSuccess();
 
-  return AssertionFailure() << pred_text << "("
-                            << e1 << ", "
-                            << e2 << ", "
-                            << e3 << ", "
-                            << e4 << ", "
-                            << e5 << ") evaluates to false, where"
-                            << "\n" << e1 << " evaluates to " << v1
-                            << "\n" << e2 << " evaluates to " << v2
-                            << "\n" << e3 << " evaluates to " << v3
-                            << "\n" << e4 << " evaluates to " << v4
-                            << "\n" << e5 << " evaluates to " << v5;
+    return AssertionFailure() << pred_text << "("
+           << e1 << ", "
+           << e2 << ", "
+           << e3 << ", "
+           << e4 << ", "
+           << e5 << ") evaluates to false, where"
+           << "\n" << e1 << " evaluates to " << v1
+           << "\n" << e2 << " evaluates to " << v2
+           << "\n" << e3 << " evaluates to " << v3
+           << "\n" << e4 << " evaluates to " << v4
+           << "\n" << e5 << " evaluates to " << v5;
 }
 
 // Internal macro for implementing {EXPECT|ASSERT}_PRED_FORMAT5.

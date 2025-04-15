@@ -64,260 +64,260 @@ class FunctionMocker;
 template <typename R>
 class FunctionMocker<R()> : public
     internal::FunctionMockerBase<R()> {
- public:
-  typedef R F();
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F();
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With() {
-    return this->current_spec();
-  }
+    MockSpec<F>& With() {
+        return this->current_spec();
+    }
 
-  R Invoke() {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple());
-  }
+    R Invoke() {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple());
+    }
 };
 
 template <typename R, typename A1>
 class FunctionMocker<R(A1)> : public
     internal::FunctionMockerBase<R(A1)> {
- public:
-  typedef R F(A1);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1));
-  }
+    R Invoke(A1 a1) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1));
+    }
 };
 
 template <typename R, typename A1, typename A2>
 class FunctionMocker<R(A1, A2)> : public
     internal::FunctionMockerBase<R(A1, A2)> {
- public:
-  typedef R F(A1, A2);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2));
-  }
+    R Invoke(A1 a1, A2 a2) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2));
+    }
 };
 
 template <typename R, typename A1, typename A2, typename A3>
 class FunctionMocker<R(A1, A2, A3)> : public
     internal::FunctionMockerBase<R(A1, A2, A3)> {
- public:
-  typedef R F(A1, A2, A3);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2, A3);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
-      const Matcher<A3>& m3) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
+                      const Matcher<A3>& m3) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2, A3 a3) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2, a3));
-  }
+    R Invoke(A1 a1, A2 a2, A3 a3) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2, a3));
+    }
 };
 
 template <typename R, typename A1, typename A2, typename A3, typename A4>
 class FunctionMocker<R(A1, A2, A3, A4)> : public
     internal::FunctionMockerBase<R(A1, A2, A3, A4)> {
- public:
-  typedef R F(A1, A2, A3, A4);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2, A3, A4);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
-      const Matcher<A3>& m3, const Matcher<A4>& m4) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
+                      const Matcher<A3>& m3, const Matcher<A4>& m4) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2, A3 a3, A4 a4) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4));
-  }
+    R Invoke(A1 a1, A2 a2, A3 a3, A4 a4) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4));
+    }
 };
 
 template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5>
+          typename A5>
 class FunctionMocker<R(A1, A2, A3, A4, A5)> : public
     internal::FunctionMockerBase<R(A1, A2, A3, A4, A5)> {
- public:
-  typedef R F(A1, A2, A3, A4, A5);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2, A3, A4, A5);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
-      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
+                      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5));
-  }
+    R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5));
+    }
 };
 
 template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5, typename A6>
+          typename A5, typename A6>
 class FunctionMocker<R(A1, A2, A3, A4, A5, A6)> : public
     internal::FunctionMockerBase<R(A1, A2, A3, A4, A5, A6)> {
- public:
-  typedef R F(A1, A2, A3, A4, A5, A6);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2, A3, A4, A5, A6);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
-      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
-      const Matcher<A6>& m6) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
-        m6));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
+                      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
+                      const Matcher<A6>& m6) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
+                                         m6));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6));
-  }
+    R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6));
+    }
 };
 
 template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5, typename A6, typename A7>
+          typename A5, typename A6, typename A7>
 class FunctionMocker<R(A1, A2, A3, A4, A5, A6, A7)> : public
     internal::FunctionMockerBase<R(A1, A2, A3, A4, A5, A6, A7)> {
- public:
-  typedef R F(A1, A2, A3, A4, A5, A6, A7);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2, A3, A4, A5, A6, A7);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
-      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
-      const Matcher<A6>& m6, const Matcher<A7>& m7) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
-        m6, m7));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
+                      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
+                      const Matcher<A6>& m6, const Matcher<A7>& m7) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
+                                         m6, m7));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6, a7));
-  }
+    R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6, a7));
+    }
 };
 
 template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5, typename A6, typename A7, typename A8>
+          typename A5, typename A6, typename A7, typename A8>
 class FunctionMocker<R(A1, A2, A3, A4, A5, A6, A7, A8)> : public
     internal::FunctionMockerBase<R(A1, A2, A3, A4, A5, A6, A7, A8)> {
- public:
-  typedef R F(A1, A2, A3, A4, A5, A6, A7, A8);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2, A3, A4, A5, A6, A7, A8);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
-      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
-      const Matcher<A6>& m6, const Matcher<A7>& m7, const Matcher<A8>& m8) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
-        m6, m7, m8));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
+                      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
+                      const Matcher<A6>& m6, const Matcher<A7>& m7, const Matcher<A8>& m8) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
+                                         m6, m7, m8));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6, a7, a8));
-  }
+    R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6, a7, a8));
+    }
 };
 
 template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5, typename A6, typename A7, typename A8, typename A9>
+          typename A5, typename A6, typename A7, typename A8, typename A9>
 class FunctionMocker<R(A1, A2, A3, A4, A5, A6, A7, A8, A9)> : public
     internal::FunctionMockerBase<R(A1, A2, A3, A4, A5, A6, A7, A8, A9)> {
- public:
-  typedef R F(A1, A2, A3, A4, A5, A6, A7, A8, A9);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2, A3, A4, A5, A6, A7, A8, A9);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
-      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
-      const Matcher<A6>& m6, const Matcher<A7>& m7, const Matcher<A8>& m8,
-      const Matcher<A9>& m9) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
-        m6, m7, m8, m9));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
+                      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
+                      const Matcher<A6>& m6, const Matcher<A7>& m7, const Matcher<A8>& m8,
+                      const Matcher<A9>& m9) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
+                                         m6, m7, m8, m9));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6, a7, a8, a9));
-  }
+    R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6, a7, a8, a9));
+    }
 };
 
 template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5, typename A6, typename A7, typename A8, typename A9,
-    typename A10>
+          typename A5, typename A6, typename A7, typename A8, typename A9,
+          typename A10>
 class FunctionMocker<R(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : public
     internal::FunctionMockerBase<R(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> {
- public:
-  typedef R F(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
-  typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
+  public:
+    typedef R F(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+    typedef typename internal::Function<F>::ArgumentTuple ArgumentTuple;
 
-  MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
-      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
-      const Matcher<A6>& m6, const Matcher<A7>& m7, const Matcher<A8>& m8,
-      const Matcher<A9>& m9, const Matcher<A10>& m10) {
-    this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
-        m6, m7, m8, m9, m10));
-    return this->current_spec();
-  }
+    MockSpec<F>& With(const Matcher<A1>& m1, const Matcher<A2>& m2,
+                      const Matcher<A3>& m3, const Matcher<A4>& m4, const Matcher<A5>& m5,
+                      const Matcher<A6>& m6, const Matcher<A7>& m7, const Matcher<A8>& m8,
+                      const Matcher<A9>& m9, const Matcher<A10>& m10) {
+        this->current_spec().SetMatchers(::testing::make_tuple(m1, m2, m3, m4, m5,
+                                         m6, m7, m8, m9, m10));
+        return this->current_spec();
+    }
 
-  R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9,
-      A10 a10) {
-    // Even though gcc and MSVC don't enforce it, 'this->' is required
-    // by the C++ standard [14.6.4] here, as the base class type is
-    // dependent on the template argument (and thus shouldn't be
-    // looked into when resolving InvokeWith).
-    return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6, a7, a8, a9,
-        a10));
-  }
+    R Invoke(A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9,
+             A10 a10) {
+        // Even though gcc and MSVC don't enforce it, 'this->' is required
+        // by the C++ standard [14.6.4] here, as the base class type is
+        // dependent on the template argument (and thus shouldn't be
+        // looked into when resolving InvokeWith).
+        return this->InvokeWith(ArgumentTuple(a1, a2, a3, a4, a5, a6, a7, a8, a9,
+                                              a10));
+    }
 };
 
 }  // namespace internal
@@ -874,220 +874,220 @@ class MockFunction;
 
 template <typename R>
 class MockFunction<R()> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD0_T(Call, R());
+    MOCK_METHOD0_T(Call, R());
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R()> AsStdFunction() {
-    return [this]() -> R {
-      return this->Call();
-    };
-  }
+    std::function<R()> AsStdFunction() {
+        return [this]() -> R {
+            return this->Call();
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0>
 class MockFunction<R(A0)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD1_T(Call, R(A0));
+    MOCK_METHOD1_T(Call, R(A0));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0)> AsStdFunction() {
-    return [this](A0 a0) -> R {
-      return this->Call(a0);
-    };
-  }
+    std::function<R(A0)> AsStdFunction() {
+        return [this](A0 a0) -> R {
+            return this->Call(a0);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1>
 class MockFunction<R(A0, A1)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD2_T(Call, R(A0, A1));
+    MOCK_METHOD2_T(Call, R(A0, A1));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1)> AsStdFunction() {
-    return [this](A0 a0, A1 a1) -> R {
-      return this->Call(a0, a1);
-    };
-  }
+    std::function<R(A0, A1)> AsStdFunction() {
+        return [this](A0 a0, A1 a1) -> R {
+            return this->Call(a0, a1);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1, typename A2>
 class MockFunction<R(A0, A1, A2)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD3_T(Call, R(A0, A1, A2));
+    MOCK_METHOD3_T(Call, R(A0, A1, A2));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1, A2)> AsStdFunction() {
-    return [this](A0 a0, A1 a1, A2 a2) -> R {
-      return this->Call(a0, a1, a2);
-    };
-  }
+    std::function<R(A0, A1, A2)> AsStdFunction() {
+        return [this](A0 a0, A1 a1, A2 a2) -> R {
+            return this->Call(a0, a1, a2);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1, typename A2, typename A3>
 class MockFunction<R(A0, A1, A2, A3)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD4_T(Call, R(A0, A1, A2, A3));
+    MOCK_METHOD4_T(Call, R(A0, A1, A2, A3));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1, A2, A3)> AsStdFunction() {
-    return [this](A0 a0, A1 a1, A2 a2, A3 a3) -> R {
-      return this->Call(a0, a1, a2, a3);
-    };
-  }
+    std::function<R(A0, A1, A2, A3)> AsStdFunction() {
+        return [this](A0 a0, A1 a1, A2 a2, A3 a3) -> R {
+            return this->Call(a0, a1, a2, a3);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1, typename A2, typename A3,
-    typename A4>
+          typename A4>
 class MockFunction<R(A0, A1, A2, A3, A4)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD5_T(Call, R(A0, A1, A2, A3, A4));
+    MOCK_METHOD5_T(Call, R(A0, A1, A2, A3, A4));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1, A2, A3, A4)> AsStdFunction() {
-    return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) -> R {
-      return this->Call(a0, a1, a2, a3, a4);
-    };
-  }
+    std::function<R(A0, A1, A2, A3, A4)> AsStdFunction() {
+        return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) -> R {
+            return this->Call(a0, a1, a2, a3, a4);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1, typename A2, typename A3,
-    typename A4, typename A5>
+          typename A4, typename A5>
 class MockFunction<R(A0, A1, A2, A3, A4, A5)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD6_T(Call, R(A0, A1, A2, A3, A4, A5));
+    MOCK_METHOD6_T(Call, R(A0, A1, A2, A3, A4, A5));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1, A2, A3, A4, A5)> AsStdFunction() {
-    return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) -> R {
-      return this->Call(a0, a1, a2, a3, a4, a5);
-    };
-  }
+    std::function<R(A0, A1, A2, A3, A4, A5)> AsStdFunction() {
+        return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5) -> R {
+            return this->Call(a0, a1, a2, a3, a4, a5);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1, typename A2, typename A3,
-    typename A4, typename A5, typename A6>
+          typename A4, typename A5, typename A6>
 class MockFunction<R(A0, A1, A2, A3, A4, A5, A6)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD7_T(Call, R(A0, A1, A2, A3, A4, A5, A6));
+    MOCK_METHOD7_T(Call, R(A0, A1, A2, A3, A4, A5, A6));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1, A2, A3, A4, A5, A6)> AsStdFunction() {
-    return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) -> R {
-      return this->Call(a0, a1, a2, a3, a4, a5, a6);
-    };
-  }
+    std::function<R(A0, A1, A2, A3, A4, A5, A6)> AsStdFunction() {
+        return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6) -> R {
+            return this->Call(a0, a1, a2, a3, a4, a5, a6);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1, typename A2, typename A3,
-    typename A4, typename A5, typename A6, typename A7>
+          typename A4, typename A5, typename A6, typename A7>
 class MockFunction<R(A0, A1, A2, A3, A4, A5, A6, A7)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD8_T(Call, R(A0, A1, A2, A3, A4, A5, A6, A7));
+    MOCK_METHOD8_T(Call, R(A0, A1, A2, A3, A4, A5, A6, A7));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1, A2, A3, A4, A5, A6, A7)> AsStdFunction() {
-    return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) -> R {
-      return this->Call(a0, a1, a2, a3, a4, a5, a6, a7);
-    };
-  }
+    std::function<R(A0, A1, A2, A3, A4, A5, A6, A7)> AsStdFunction() {
+        return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7) -> R {
+            return this->Call(a0, a1, a2, a3, a4, a5, a6, a7);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1, typename A2, typename A3,
-    typename A4, typename A5, typename A6, typename A7, typename A8>
+          typename A4, typename A5, typename A6, typename A7, typename A8>
 class MockFunction<R(A0, A1, A2, A3, A4, A5, A6, A7, A8)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD9_T(Call, R(A0, A1, A2, A3, A4, A5, A6, A7, A8));
+    MOCK_METHOD9_T(Call, R(A0, A1, A2, A3, A4, A5, A6, A7, A8));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1, A2, A3, A4, A5, A6, A7, A8)> AsStdFunction() {
-    return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7,
+    std::function<R(A0, A1, A2, A3, A4, A5, A6, A7, A8)> AsStdFunction() {
+        return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7,
         A8 a8) -> R {
-      return this->Call(a0, a1, a2, a3, a4, a5, a6, a7, a8);
-    };
-  }
+            return this->Call(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 template <typename R, typename A0, typename A1, typename A2, typename A3,
-    typename A4, typename A5, typename A6, typename A7, typename A8,
-    typename A9>
+          typename A4, typename A5, typename A6, typename A7, typename A8,
+          typename A9>
 class MockFunction<R(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)> {
- public:
-  MockFunction() {}
+  public:
+    MockFunction() {}
 
-  MOCK_METHOD10_T(Call, R(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9));
+    MOCK_METHOD10_T(Call, R(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9));
 
 #if GTEST_HAS_STD_FUNCTION_
-  std::function<R(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)> AsStdFunction() {
-    return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7,
+    std::function<R(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)> AsStdFunction() {
+        return [this](A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7,
         A8 a8, A9 a9) -> R {
-      return this->Call(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
-    };
-  }
+            return this->Call(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+        };
+    }
 #endif  // GTEST_HAS_STD_FUNCTION_
 
- private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
+  private:
+    GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFunction);
 };
 
 }  // namespace testing
