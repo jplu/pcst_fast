@@ -215,6 +215,7 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
     ],
     python_requires='>=3.9',
+    setup_requires=[f'pybind11>=2.10'],
     cmdclass={'build_ext': build_ext},
     zip_safe=False,
 )
