@@ -11,7 +11,7 @@ A fast C++ implementation of the Prize-Collecting Steiner Forest (PCSF) algorith
 *   Supports various pruning methods to refine solutions.
 *   Releases the Python Global Interpreter Lock (GIL) during C++ execution, allowing for better concurrency in threaded applications.
 *   Simple Python API using NumPy arrays.
-*	See the [NOTES](NOTES.md) files to have a better understanding of what has changed and still remaining to update.
+*	See the [NOTES](NOTES.md) file to have a better understanding of what has changed and still remaining to update.
 
 ## Installation
 
@@ -21,7 +21,7 @@ A fast C++ implementation of the Prize-Collecting Steiner Forest (PCSF) algorith
     *   GCC version 13+
     *   Clang version 15+
     *   MSVC (Visual Studio 2022 v17.4+) - *Required if installing via `pip` on Windows*
-*   **Python:** Version 3.11+
+*   **Python:** Version 3.9+
 *   **Build System:**
     *   `make` (if building manually using the Makefile)
     *   Standard Python packaging tools (`pip`, `setuptools`, `build`)
