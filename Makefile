@@ -155,6 +155,37 @@ run_tests: build_tests
 	done
 	@echo "All tests passed."
 
+$(OBJDIR_RELEASE)/src/%.o: $(SRCDIR)/%.cc | $(OBJDIR_RELEASE)/src $(DIRS_TO_CREATE)
+	@echo "Compiling (Release) $<"
+	$(CXX) $(CXXFLAGS_RELEASE) $(INCLUDES) -MMD -MP -c $< -o $@
+
+$(OBJDIR_RELEASE)/src/pruning/%.o: $(SRCDIR)/pruning/%.cc | $(OBJDIR_RELEASE)/src/pruning $(DIRS_TO_CREATE)
+	@echo "Compiling (Release) $<"
+	$(CXX) $(CXXFLAGS_RELEASE) $(INCLUDES) -MMD -MP -c $< -o $@
+
+$(OBJDIR_RELEASE)/bindings/%.o: $(BINDINGSDIR)/%.cc | $(OBJDIR_RELEASE)/bindings $(DIRS_TO_CREATE)
+	@echo "Compiling (Release) $<"
+	$(CXX) $(CXXFLAGS_RELEASE) $(INCLUDES) $(PYTHON_CFLAGS) -MMD -MP -c $< -o $@
+
+$(OBJDIR_DEBUG)/src/%.o: $(SRCDIR)/%.cc | $(OBJDIR_DEBUG)/src $(DIRS_TO_CREATE)
+	@echo "Compiling (Debug) $<"
+	$(CXX) $(CXXFLAGS_DEBUG) $(INCLUDES) -MMD -MP -c $< -o $@
+
+$(OBJDIR_DEBUG)/src/pruning/%.o: $(SRCDIR)/pruning/%.cc | $(OBJDIR_DEBUG)/src/pruning $(DIRS_TO_CREATE)
+	@echo "Compiling (Debug) $<"
+	$(CXX) $(CXXFLAGS_DEBUG) $(INCLUDES) -MMD -MP -c $< -o $@
+
+$(OBJDIR_DEBUG)/tests/%.o: $(TESTDIR)/%.cc | $(OBJDIR_DEBUG)/tests $(DIRS_TO_CREATE)
+	@echo "Compiling (Debug) $<"
+	$(CXX) $(CXXFLAGS_DEBUG) $(INCLUDES) -MMD -MP -c $< -o $@
+
+$(OBJDIR_DEBUG)/tests/pruning/%.o: $(TESTDIR)/pruning/%.cc | $(OBJDIR_DEBUG)/tests/pruning $(DIRS_TO_CREATE)
+	@echo "Compiling (Debug) $<"
+	$(CXX) $(CXXFLAGS_DEBUG) $(INCLUDES) -MMD -MP -c $< -o $@
+
+$(OBJDIR_DEBUG)/gtest/%.o: $(EXTERNALDIR)/googletest/googletest/src/%.cc | $(OBJDIR_DEBUG)/gtest $(DIRS_TO_CREATE)
+	@echo "Compiling gtest (Debug) $*.cc"
+	$(CXX) $(CXXFLAGS_DEBUG) $(INCLUDES) -I$(EXTERNALDIR)/googletest/googletest -c $< -o $@
 
 $(DIRS_TO_CREATE):
 	@$(MKDIR_P) $@
