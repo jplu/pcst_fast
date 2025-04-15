@@ -17,7 +17,6 @@ authors = [
     {name = "ludwigschmidt"},
     {name = "alexlenail"},
 ]
-requires-python = ">=3.9"
 
 [project.urls]
 homepage = "https://github.com/fraenkel-lab/pcst_fast"
