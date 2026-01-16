@@ -6,6 +6,7 @@
 #include <cmath>
 #include <limits>
 #include <cassert>
+#include <format>
 
 namespace cluster_approx {
 
@@ -20,7 +21,6 @@ PCSTCoreAlgorithm::PCSTCoreAlgorithm(const GraphData& graph,
     const size_t num_edges = graph_.edges.size();
 
     if (graph_.root != kInvalidNodeId && target_num_active_clusters != 0) {
-
         logger_->log(LogLevel::ERROR,
                      "Target number of active clusters ({}) must be 0 for rooted problems (root = {}).",
                      target_num_active_clusters, graph_.root);
@@ -29,7 +29,6 @@ PCSTCoreAlgorithm::PCSTCoreAlgorithm(const GraphData& graph,
                                         target_num_active_clusters, graph_.root));
     }
     if (target_num_active_clusters < 0) {
-
         logger_->log(LogLevel::ERROR,
                      "Target number of active clusters ({}) cannot be negative.",
                      target_num_active_clusters);
@@ -39,12 +38,10 @@ PCSTCoreAlgorithm::PCSTCoreAlgorithm(const GraphData& graph,
     }
 
     if (graph_.prizes.empty()) {
-
         logger_->log(LogLevel::ERROR, "Prizes data cannot be empty.");
         throw std::invalid_argument("Prizes data cannot be empty.");
     }
     if (graph_.edges.size() != graph_.costs.size()) {
-
         logger_->log(LogLevel::ERROR,
                      "Number of edges ({}) does not match number of costs ({}).",
                      graph_.edges.size(), graph_.costs.size());
@@ -55,7 +52,6 @@ PCSTCoreAlgorithm::PCSTCoreAlgorithm(const GraphData& graph,
 
     for (size_t i = 0; i < num_nodes; ++i) {
         if (graph_.prizes[i] < 0.0) {
-
             logger_->log(LogLevel::ERROR, "Prize for node {} ({}) is negative.", i, graph_.prizes[i]);
             throw std::invalid_argument(std::format("Prize for node {} ({}) is negative.", i, graph_.prizes[i]));
         }
@@ -67,7 +63,7 @@ PCSTCoreAlgorithm::PCSTCoreAlgorithm(const GraphData& graph,
             logger_->log(LogLevel::ERROR, "Cost for edge {} ({}) is negative.", i, cost);
             throw std::invalid_argument(std::format("Cost for edge {} ({}) is negative.", i, cost));
         }
-
+        
         const NodeId u = graph_.edges[i].first;
         const NodeId v = graph_.edges[i].second;
         if (u < 0 || static_cast<size_t>(u) >= num_nodes || v < 0 || static_cast<size_t>(v) >= num_nodes) {
@@ -81,7 +77,6 @@ PCSTCoreAlgorithm::PCSTCoreAlgorithm(const GraphData& graph,
 
 PCSTCoreAlgorithm::~PCSTCoreAlgorithm() {
     logger_->log(LogLevel::DEBUG, "PCSTCoreAlgorithm destructor called.");
-
 }
 
 void PCSTCoreAlgorithm::initialize() {
@@ -95,9 +90,12 @@ void PCSTCoreAlgorithm::initialize() {
 
     const size_t num_nodes = graph_.prizes.size();
     const size_t num_edges = graph_.edges.size();
+    
+    // Initialize the heap allocator. Reserve capacity for at least 2*|E| nodes.
+    // This monolithic allocation improves performance and memory safety.
+    heap_node_allocator_ = std::make_unique<PairingHeapType::AllocatorType>(2 * num_edges);
 
     clusters_.clear();
-
     clusters_.reserve(num_nodes + (num_nodes > 0 ? num_nodes - 1 : 0));
     edge_parts_.assign(2 * num_edges, EdgePart{});
     edge_info_.assign(num_edges, EdgeInfo{});
@@ -107,8 +105,8 @@ void PCSTCoreAlgorithm::initialize() {
     clusters_next_edge_event_ = PriorityQueueType();
 
     for (NodeId i = 0; i < static_cast<NodeId>(num_nodes); ++i) {
-
-        clusters_.emplace_back(&pairing_heap_buffer_);
+        // Pass allocator and buffer to Cluster
+        clusters_.emplace_back(heap_node_allocator_.get(), &pairing_heap_buffer_);
         Cluster& cluster = clusters_.back();
 
         cluster.active = (i != graph_.root);
@@ -143,7 +141,6 @@ void PCSTCoreAlgorithm::initialize() {
 
         if (u == v) {
             logger_->log(LogLevel::WARNING, "Ignoring self-loop edge {} ({}, {}) with cost {}.", i, u, v, cost);
-
             if (static_cast<size_t>(2*i + 1) < edge_parts_.size()) {
                 edge_parts_[2 * i].deleted = true;
                 edge_parts_[2 * i + 1].deleted = true;
@@ -247,6 +244,8 @@ CoreAlgorithmResult PCSTCoreAlgorithm::run() {
         }
 
         double time_delta = std::min(edge_event_time, cluster_event_time) - current_time_;
+        
+        // Safety check with clamping to prevent crashes on tiny precision errors
         if (time_delta < -eps_) {
             logger_->log(LogLevel::ERROR,
                          "Negative time delta detected! Next event time {} < current time {}. Aborting.",
@@ -280,7 +279,6 @@ CoreAlgorithmResult PCSTCoreAlgorithm::run() {
     node_good_.assign(graph_.prizes.size(), false);
     logger_->log(LogLevel::DEBUG, "Marking 'good' nodes reachable from final clusters.");
     if (graph_.root != kInvalidNodeId) {
-
         ClusterId final_root_cluster = kInvalidClusterId;
         for(ClusterId i = 0; i < static_cast<ClusterId>(clusters_.size()); ++i) {
             if (clusters_[i].contains_root && clusters_[i].merged_into == kInvalidClusterId) {
@@ -293,13 +291,11 @@ CoreAlgorithmResult PCSTCoreAlgorithm::run() {
             mark_nodes_as_good(final_root_cluster);
         } else {
             logger_->log(LogLevel::WARNING, "Rooted case: Could not find the final cluster containing root {}. No nodes marked good.", graph_.root);
-
             if(graph_.root >= 0 && static_cast<size_t>(graph_.root) < node_good_.size()) {
                 node_good_[graph_.root] = true;
             }
         }
     } else {
-
         logger_->log(LogLevel::DEBUG, "Unrooted case: Marking nodes from {} remaining active clusters.", num_active_clusters_);
         for (ClusterId i = 0; i < static_cast<ClusterId>(clusters_.size()); ++i) {
             if (clusters_[i].active && clusters_[i].merged_into == kInvalidClusterId) {
@@ -342,7 +338,6 @@ void PCSTCoreAlgorithm::handle_edge_event(double event_time, EdgePartId edge_par
     if (cluster_idx_current == cluster_idx_other) {
         stats_.num_merged_edge_events++;
         logger_->log(LogLevel::DEBUG, "Edge part {} connects already merged clusters ({}), ignoring.", edge_part_index, cluster_idx_current);
-
         edge_parts_[edge_part_index].deleted = true;
         edge_parts_[other_edge_part_index].deleted = true;
         return;
@@ -351,7 +346,6 @@ void PCSTCoreAlgorithm::handle_edge_event(double event_time, EdgePartId edge_par
     if (edge_parts_[other_edge_part_index].deleted) {
         stats_.num_deleted_edge_events++;
         logger_->log(LogLevel::TRACE,"Other edge part {} was deleted, skipping event for part {}.", other_edge_part_index, edge_part_index);
-
         edge_parts_[edge_part_index].deleted = true;
         return;
     }
@@ -371,7 +365,6 @@ void PCSTCoreAlgorithm::handle_edge_event(double event_time, EdgePartId edge_par
         merge_clusters(cluster_idx_current, cluster_idx_other, edge_index, event_time, std::max(0.0, remainder));
 
     } else {
-
         Cluster& current_cluster = clusters_[cluster_idx_current];
         Cluster& other_cluster = clusters_[cluster_idx_other];
         EdgePart& current_edge_part_ref = edge_parts_[edge_part_index];
@@ -389,7 +382,6 @@ void PCSTCoreAlgorithm::handle_edge_event(double event_time, EdgePartId edge_par
 
             logger_->log(LogLevel::TRACE, "  Updating part {}: New event time={:.4f}, New val={:.4f}", edge_part_index, time_to_meet, val_at_meet_current);
             current_edge_part_ref.next_event_val = val_at_meet_current;
-
             current_edge_part_ref.heap_node = current_cluster.edge_parts.insert(time_to_meet, edge_part_index);
 
             if (!current_cluster.edge_parts.is_empty()) {
@@ -405,7 +397,6 @@ void PCSTCoreAlgorithm::handle_edge_event(double event_time, EdgePartId edge_par
 
             if (other_edge_part_ref.heap_node != nullptr) {
                 clusters_next_edge_event_.delete_element(cluster_idx_other);
-
                 other_cluster.edge_parts.decrease_key(other_edge_part_ref.heap_node, old_event_time_other, time_to_meet);
                 other_edge_part_ref.next_event_val = val_at_meet_other;
 
@@ -418,12 +409,9 @@ void PCSTCoreAlgorithm::handle_edge_event(double event_time, EdgePartId edge_par
                 }
             } else {
                 logger_->log(LogLevel::WARNING, "Other edge part {} heap node is null, cannot decrease key.", other_edge_part_index);
-
                 other_edge_part_ref.next_event_val = val_at_meet_other;
             }
-        }
-
-        else {
+        } else {
             logger_->log(LogLevel::DEBUG, "Edge {} growth (Active-Inactive). Remainder: {:.4f}", edge_index, remainder);
             assert(current_cluster.active != other_cluster.active);
             assert(remainder > 0.0);
@@ -439,14 +427,11 @@ void PCSTCoreAlgorithm::handle_edge_event(double event_time, EdgePartId edge_par
             ClusterId active_cluster_idx = current_cluster.active ? cluster_idx_current : cluster_idx_other;
 
             double finished_moat_inactive = current_cluster.active ? finished_moat_other : finished_moat_current;
-
             double time_to_meet = event_time + remainder;
-
             double val_at_meet_active = current_edge_cost - finished_moat_inactive;
 
             logger_->log(LogLevel::TRACE, "  Updating active part {}: New event time={:.4f}, New val={:.4f}", active_part_idx, time_to_meet, val_at_meet_active);
             active_part.next_event_val = val_at_meet_active;
-
             active_part.heap_node = active_cluster.edge_parts.insert(time_to_meet, active_part_idx);
 
             if (!active_cluster.edge_parts.is_empty()) {
@@ -462,15 +447,10 @@ void PCSTCoreAlgorithm::handle_edge_event(double event_time, EdgePartId edge_par
             logger_->log(LogLevel::TRACE, "  Updating inactive part {}: Decrease key to time={:.4f}, New val={:.4f}", inactive_part_idx, inactive_deactivation_time, finished_moat_inactive);
 
             if (inactive_part.heap_node != nullptr) {
-
                 double old_event_time_inactive = inactive_cluster.active_end_time + inactive_part.next_event_val - finished_moat_inactive;
-
-                inactive_cluster.edge_parts.decrease_key(inactive_part.heap_node,
-                                           old_event_time_inactive,
-                                           inactive_deactivation_time);
+                inactive_cluster.edge_parts.decrease_key(inactive_part.heap_node, old_event_time_inactive, inactive_deactivation_time);
                 inactive_part.next_event_val = finished_moat_inactive;
             } else {
-
                 logger_->log(LogLevel::TRACE, "  Inactive part {} has no heap node. Just updating value.", inactive_part_idx);
                 inactive_part.next_event_val = finished_moat_inactive;
             }
@@ -509,7 +489,7 @@ ClusterId PCSTCoreAlgorithm::merge_clusters(ClusterId cluster1_idx, ClusterId cl
     assert(static_cast<size_t>(cluster2_idx) < clusters_.size());
     assert(cluster1_idx != cluster2_idx);
 
-    clusters_.emplace_back(&pairing_heap_buffer_);
+    clusters_.emplace_back(heap_node_allocator_.get(), &pairing_heap_buffer_);
     ClusterId new_cluster_idx = clusters_.size() - 1;
     logger_->log(LogLevel::DEBUG, "Merging clusters {} and {} into new cluster {} along edge {} at time {:.4f}",
                  cluster1_idx, cluster2_idx, new_cluster_idx, merge_edge_idx, event_time);
@@ -547,10 +527,8 @@ ClusterId PCSTCoreAlgorithm::merge_clusters(ClusterId cluster1_idx, ClusterId cl
             active_node = v_node;
             inactive_node = u_node;
         } else {
-
             logger_->log(LogLevel::ERROR, "Could not reliably determine active/inactive nodes for merge edge {}. Repr clusters: u={}, v={}. Original clusters: {}, {}",
                          merge_edge_idx, u_repr_cluster, v_repr_cluster, active_original_cluster_idx, inactive_original_cluster_idx);
-
             active_node = (cluster1.active ? u_node : v_node);
             inactive_node = (cluster1.active ? v_node : u_node);
             assert(false && "Logic error determining active/inactive nodes in merge.");
@@ -586,7 +564,6 @@ ClusterId PCSTCoreAlgorithm::merge_clusters(ClusterId cluster1_idx, ClusterId cl
         }
         num_active_clusters_--;
     } else {
-
         logger_->log(LogLevel::TRACE, "  Cluster {} was already inactive.", cluster1_idx);
     }
     cluster1.merged_into = new_cluster_idx;
@@ -684,14 +661,11 @@ std::optional<std::pair<double, std::pair<ClusterId, EdgePartId>>> PCSTCoreAlgor
             cluster_index = min_cluster_event->second;
             assert(static_cast<size_t>(cluster_index) < clusters_.size());
             if (!clusters_[cluster_index].edge_parts.is_empty()) {
-
                 break;
             }
-
             logger_->log(LogLevel::ERROR, "Mismatch: Global edge queue has event for cluster {} but its local heap is empty! Removing stale global entry.", cluster_index);
             clusters_next_edge_event_.delete_element(cluster_index);
         }
-
     }
 
     double actual_heap_min_val = std::numeric_limits<double>::infinity();
@@ -700,9 +674,7 @@ std::optional<std::pair<double, std::pair<ClusterId, EdgePartId>>> PCSTCoreAlgor
     bool success = clusters_[cluster_index].edge_parts.get_min(&actual_heap_min_val, &edge_part_index);
 
     if (!success) {
-
         logger_->log(LogLevel::FATAL, "Internal Error: Failed to get_min from supposedly non-empty heap for cluster {}!", cluster_index);
-
         throw std::runtime_error(std::format("Internal Error: Failed get_min for cluster {}", cluster_index));
     }
 
@@ -711,7 +683,6 @@ std::optional<std::pair<double, std::pair<ClusterId, EdgePartId>>> PCSTCoreAlgor
     if (std::fabs(global_event_time - actual_heap_min_val) > eps_ * std::fabs(global_event_time)) {
         logger_->log(LogLevel::WARNING, "Mismatch between global edge event time ({:.6f}) and cluster {} heap min time ({:.6f}). Using heap min.",
                      global_event_time, cluster_index, actual_heap_min_val);
-
     }
 
     return std::make_pair(event_time, std::make_pair(cluster_index, edge_part_index));
@@ -773,7 +744,6 @@ void PCSTCoreAlgorithm::get_sum_on_edge_part(EdgePartId edge_part_index,
             *current_cluster_index = clusters_[cluster_id].skip_up;
             logger_->log(LogLevel::TRACE, "Path compression: Skipping from {} to {} (sum {})", cluster_id, *current_cluster_index, clusters_[cluster_id].skip_up_sum);
         } else {
-
             *total_sum += clusters_[cluster_id].moat;
             *current_cluster_index = clusters_[cluster_id].merged_into;
             logger_->log(LogLevel::TRACE, "Path traversal: Moving from {} to {} (added moat {})", cluster_id, *current_cluster_index, clusters_[cluster_id].moat);
@@ -800,7 +770,6 @@ void PCSTCoreAlgorithm::get_sum_on_edge_part(EdgePartId edge_part_index,
                      *current_cluster_index, *finished_moat_sum, *total_sum, current_time_, root_cluster.active_start_time);
         assert(*total_sum >= *finished_moat_sum - eps_);
     } else {
-
         *total_sum += root_cluster.moat;
         *finished_moat_sum = *total_sum;
         logger_->log(LogLevel::TRACE, "Root cluster {} is inactive. Moat={:.4f}, FinishedMoat=TotalSum={:.4f}",
@@ -825,7 +794,6 @@ void PCSTCoreAlgorithm::mark_nodes_as_good(ClusterId start_cluster_index) {
         const Cluster& cluster = clusters_[current_cluster_idx];
 
         if (cluster.merged_along == kInvalidEdgeId) {
-
             assert(current_cluster_idx < static_cast<ClusterId>(graph_.prizes.size()));
             if (current_cluster_idx >= 0 && static_cast<size_t>(current_cluster_idx) < node_good_.size()) {
                 if (!node_good_[current_cluster_idx]) {
@@ -837,7 +805,6 @@ void PCSTCoreAlgorithm::mark_nodes_as_good(ClusterId start_cluster_index) {
                 assert(false);
             }
         } else {
-
             logger_->log(LogLevel::TRACE, "Exploring children ({}, {}) of merged cluster {}", cluster.child_cluster_1, cluster.child_cluster_2, current_cluster_idx);
             if (cluster.child_cluster_1 != kInvalidClusterId && !visited_clusters[cluster.child_cluster_1]) {
                 visited_clusters[cluster.child_cluster_1] = true;
@@ -869,6 +836,10 @@ CoreAlgorithmResult PCSTCoreAlgorithm::build_core_result() {
 
     result.inactive_merge_events = std::move(inactive_merge_events_);
     result.final_cluster_state = std::move(clusters_);
+    
+    // Transfer ownership of the heap node pool to the result, ensuring nodes remain valid
+    result.heap_node_allocator = std::move(heap_node_allocator_);
+    
     logger_->log(LogLevel::DEBUG, "Moved {} inactive merge events to result.", result.inactive_merge_events.size());
 
     return result;

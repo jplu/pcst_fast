@@ -6,18 +6,13 @@
 
 #include <vector>
 #include <utility>
+#include <span>
 
 #include "gtest/gtest.h"
 
 using namespace cluster_approx;
 
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-
 TEST(NoPrunerTest, ReturnsIntermediateResult) {
-
     test_utils::NullLogger logger;
     size_t num_nodes = 5;
     std::vector<std::pair<NodeId, NodeId>> edges_vec = {{0, 1}, {1, 2}, {2, 3}, {3, 4}};
@@ -32,31 +27,17 @@ TEST(NoPrunerTest, ReturnsIntermediateResult) {
 
     CoreAlgorithmResult core_result;
     core_result.phase1_edges = {1, 2};
-
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-
     core_result.initial_node_filter = {false, true, true, true, false};
-
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
 
     PruningInput input{graph, core_result, &logger};
 
     pruning::NoPruner pruner;
-
     PruningResult result = pruner.prune(input);
 
     std::vector<EdgeId> expected_edges = {1, 2};
     CheckResult(expected_edges, result.edges);
 
+    // Nodes 1, 2, 3 are kept because they are in the edges or marked true
     std::vector<NodeId> expected_nodes = {1, 2, 3};
     CheckResult(expected_nodes, result.nodes);
 }
-
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif

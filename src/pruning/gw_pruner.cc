@@ -1,6 +1,5 @@
 #include "pcst_fast/pruning/gw_pruner.h"
 #include "pcst_fast/pruning/pruning_utils.h"
-
 #include "pcst_fast/pcst_core_internals.h"
 
 #include <vector>
@@ -34,7 +33,6 @@ void GWPruner::mark_clusters_as_necessary_from_node(NodeId start_node_index) {
         if (clusters[current_cluster_idx].merged_into != kInvalidClusterId) {
             current_cluster_idx = clusters[current_cluster_idx].merged_into;
         } else {
-
             logger_->log(LogLevel::TRACE, "    Reached merge tree root (cluster {}), stopping necessary propagation.", current_cluster_idx);
             return;
         }
@@ -53,7 +51,8 @@ PruningResult GWPruner::prune(const PruningInput& input) {
     node_deleted_.assign(num_nodes_, false);
     node_queue_.clear();
 
-    clusters_ptr_ = const_cast<std::vector<Cluster>*>(&input.core_result.final_cluster_state);
+    // Now safe access without const_cast due to interface change
+    clusters_ptr_ = &input.core_result.final_cluster_state;
     assert(clusters_ptr_ != nullptr);
 
     logger_->log(LogLevel::INFO, "Applying GWPruning strategy.");
@@ -76,7 +75,6 @@ PruningResult GWPruner::prune(const PruningInput& input) {
 
     if (intermediate_edges.empty()) {
         logger_->log(LogLevel::INFO, "No intermediate edges after filtering, GW pruning results in empty graph.");
-
         return { build_final_node_set(num_nodes_, node_deleted_, input.core_result.initial_node_filter), {} };
     }
 
@@ -101,14 +99,11 @@ PruningResult GWPruner::prune(const PruningInput& input) {
         EventId merge_event_id = input.core_result.edge_inactive_merge_event_ids[current_edge_index];
 
         if (merge_event_id == kInvalidEventId) {
-
             logger_->log(LogLevel::TRACE, "  Edge {} ({},{}) from Active-Active merge. Keeping.", current_edge_index, u, v);
             final_edges.push_back(current_edge_index);
-
             mark_clusters_as_necessary_from_node(u);
             mark_clusters_as_necessary_from_node(v);
         } else {
-
             logger_->log(LogLevel::TRACE, "  Edge {} ({},{}) from Active-Inactive merge (EventID: {}).", current_edge_index, u, v, merge_event_id);
             assert(static_cast<size_t>(merge_event_id) < input.core_result.inactive_merge_events.size());
             const InactiveMergeEvent& merge_event = input.core_result.inactive_merge_events[merge_event_id];
@@ -122,11 +117,9 @@ PruningResult GWPruner::prune(const PruningInput& input) {
             if ((*clusters_ptr_)[inactive_cluster_index].necessary) {
                 logger_->log(LogLevel::TRACE, "  Inactive cluster index {} is necessary. Keeping edge {}.", inactive_cluster_index, current_edge_index);
                 final_edges.push_back(current_edge_index);
-
                 mark_clusters_as_necessary_from_node(active_side_node);
                 mark_clusters_as_necessary_from_node(inactive_side_node);
             } else {
-
                 bool inactive_is_root = (inactive_side_node == input_->graph.root && input_->graph.root != kInvalidNodeId);
                 if (inactive_is_root) {
                     logger_->log(LogLevel::TRACE, "  Inactive side node {} is root. Keeping edge {}.", inactive_side_node, current_edge_index);
@@ -147,7 +140,6 @@ PruningResult GWPruner::prune(const PruningInput& input) {
 
     PruningResult result;
     result.edges = std::move(final_edges);
-
     result.nodes = build_final_node_set(num_nodes_, node_deleted_, input.core_result.initial_node_filter);
 
     logger_->log(LogLevel::DEBUG, "GWPruning: Derived {} final nodes.", result.nodes.size());
@@ -199,7 +191,6 @@ void GWPruner::mark_nodes_as_deleted(NodeId start_node_index, NodeId parent_node
                 logger_->log(LogLevel::TRACE, "    Marked node {} as deleted (neighbor of {}).", neighbor_node, current_node);
             }
         }
-
     }
 }
 

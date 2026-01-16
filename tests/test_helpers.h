@@ -1,10 +1,12 @@
-#pragma once // Use pragma once
+#pragma once
 
 #include <vector>
-#include <cstdio>
 #include <algorithm>
+#include <span>
+#include <string>
 
 #include "gtest/gtest.h"
+#include "pcst_fast/logger.h"
 
 template <typename T, size_t N>
 [[nodiscard]] constexpr T* begin(T(&arr)[N]) noexcept {
@@ -15,13 +17,9 @@ template <typename T, size_t N>
     return &arr[0] + N;
 }
 
-
 /**
  * @brief Compares two vectors element by element after sorting them.
- * Asserts that sizes are equal and elements match. Used for comparing results like node/edge sets.
- * @tparam T The type of elements in the vectors. Must support operator== and operator<.
- * @param expected_result The vector containing the expected elements.
- * @param result The vector containing the actual elements obtained.
+ * Asserts that sizes are equal and elements match.
  */
 template <typename T>
 void CheckResult(const std::vector<T>& expected_result, const std::vector<T>& result) {
@@ -38,8 +36,6 @@ void CheckResult(const std::vector<T>& expected_result, const std::vector<T>& re
                 << "Vectors differ at index " << i << " after sorting.";
     }
 }
-
-#include "pcst_fast/logger.h"
 
 namespace cluster_approx {
 namespace test_utils {

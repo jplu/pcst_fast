@@ -14,7 +14,7 @@ class MockLogger : public Logger {
 
   protected:
     void log_impl(LogLevel level, const std::string& message) override {
-
+        // Simple mock format for verification
         log_stream << static_cast<int>(level) << ": " << message << std::endl;
     }
 };
@@ -43,13 +43,13 @@ TEST(LoggerTest, NullLoggerWorks) {
 TEST(LoggerTest, LevelFiltering) {
     MockLogger logger;
 
-    logger.set_level(LogLevel::INFO);
+    logger.set_level(LogLevel::INFO); // Int value 3
 
-    logger.log(LogLevel::ERROR, "Error should be logged.");
-    logger.log(LogLevel::WARNING, "Warning should be logged.");
-    logger.log(LogLevel::INFO, "Info should be logged.");
-    logger.log(LogLevel::DEBUG, "Debug should NOT be logged.");
-    logger.log(LogLevel::TRACE, "Trace should NOT be logged.");
+    logger.log(LogLevel::ERROR, "Error should be logged."); // 1 <= 3
+    logger.log(LogLevel::WARNING, "Warning should be logged."); // 2 <= 3
+    logger.log(LogLevel::INFO, "Info should be logged."); // 3 <= 3
+    logger.log(LogLevel::DEBUG, "Debug should NOT be logged."); // 4 > 3
+    logger.log(LogLevel::TRACE, "Trace should NOT be logged."); // 5 > 3
 
     std::string output = logger.log_stream.str();
     EXPECT_NE(output.find("1: Error should be logged."), std::string::npos);
@@ -63,7 +63,6 @@ TEST(LoggerTest, LevelFiltering) {
 
     output = logger.log_stream.str();
     EXPECT_NE(output.find("4: Debug should NOW be logged."), std::string::npos);
-
 }
 
 TEST(LoggerTest, Formatting) {
@@ -81,4 +80,3 @@ TEST(LoggerTest, Formatting) {
     EXPECT_NE(output.find("double=3.140"), std::string::npos);
     EXPECT_NE(output.find("string='test'"), std::string::npos);
 }
-

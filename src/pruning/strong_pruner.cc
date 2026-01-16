@@ -36,7 +36,6 @@ PruningResult StrongPruner::prune(const PruningInput& input) {
 
     if (intermediate_edges.empty()) {
         logger_->log(LogLevel::INFO, "No intermediate edges after filtering, Strong pruning results in empty graph.");
-
         std::vector<bool> temp_deleted(num_nodes_, false);
         return { build_final_node_set(num_nodes_, temp_deleted, input.core_result.initial_node_filter), {} };
     }
@@ -56,7 +55,6 @@ PruningResult StrongPruner::prune(const PruningInput& input) {
 
     logger_->log(LogLevel::DEBUG, "Finding connected components...");
     for (NodeId i = 0; i < static_cast<NodeId>(num_nodes_); ++i) {
-
         bool node_is_relevant = !neighbors_[i].empty() ||
                                 (static_cast<size_t>(i) < input.core_result.initial_node_filter.size() && input.core_result.initial_node_filter[i]);
 
@@ -79,12 +77,10 @@ PruningResult StrongPruner::prune(const PruningInput& input) {
         }
 
         if (comp_idx == root_component_index_) {
-
             logger_->log(LogLevel::DEBUG, "Component {} contains root {}. Pruning starting from root.", comp_idx, input_->graph.root);
             assert(input_->graph.root != kInvalidNodeId);
             strong_pruning_dfs(input_->graph.root, true);
         } else {
-
             logger_->log(LogLevel::DEBUG, "Component {} does not contain root. Finding best root...", comp_idx);
             NodeId best_root = find_best_component_root(comp_idx);
             logger_->log(LogLevel::DEBUG, "Best root for component {} is {}. Pruning from best root.", comp_idx, best_root);
@@ -113,7 +109,6 @@ PruningResult StrongPruner::prune(const PruningInput& input) {
 
     PruningResult result;
     result.edges = std::move(final_edges);
-
     result.nodes = build_final_node_set(num_nodes_, node_deleted_, input.core_result.initial_node_filter);
 
     logger_->log(LogLevel::DEBUG, "StrongPruning: Derived {} final nodes.", result.nodes.size());
@@ -152,7 +147,6 @@ void StrongPruner::label_final_component(NodeId start_node_index, ClusterId comp
                 final_component_label_[neighbor_node] = component_index;
                 dfs_stack2_.push_back(neighbor_node);
             } else {
-
                 assert(final_component_label_[neighbor_node] == component_index && "Node labelled with different component index during DFS!");
             }
         }
@@ -164,7 +158,6 @@ void StrongPruner::strong_pruning_dfs(NodeId start_node_index, bool mark_as_dele
     assert(static_cast<size_t>(start_node_index) < num_nodes_);
 
     dfs_stack_.clear();
-
     strong_pruning_parent_[start_node_index] = {kInvalidNodeId, 0.0};
     dfs_stack_.push_back({true, start_node_index});
 
@@ -174,7 +167,6 @@ void StrongPruner::strong_pruning_dfs(NodeId start_node_index, bool mark_as_dele
 
         if (is_entry_call) {
             logger_->log(LogLevel::TRACE, "  DFS Entry: Node {}", current_node);
-
             dfs_stack_.push_back({false, current_node});
 
             assert(static_cast<size_t>(current_node) < neighbors_.size());
@@ -195,7 +187,6 @@ void StrongPruner::strong_pruning_dfs(NodeId start_node_index, bool mark_as_dele
             }
         } else {
             logger_->log(LogLevel::TRACE, "  DFS Exit: Node {}", current_node);
-
             assert(static_cast<size_t>(current_node) < input_->graph.prizes.size());
             assert(static_cast<size_t>(current_node) < strong_pruning_payoff_.size());
 
@@ -224,14 +215,12 @@ void StrongPruner::strong_pruning_dfs(NodeId start_node_index, bool mark_as_dele
                     if (mark_as_deleted) {
                         logger_->log(LogLevel::DEBUG, "    Pruning subtree at node {} (from parent {}): Net payoff {:.4f} <= 0.",
                                      neighbor_node, current_node, child_net_payoff);
-
                         mark_nodes_as_deleted(neighbor_node, current_node);
                     } else {
                         logger_->log(LogLevel::TRACE, "    Subtree at node {} would be pruned (payoff {:.4f}), but not marking.",
                                      neighbor_node, child_net_payoff);
                     }
                 } else {
-
                     strong_pruning_payoff_[current_node] += child_net_payoff;
                     logger_->log(LogLevel::TRACE, "    Adding positive payoff {:.4f} from child {} to parent {}. New parent payoff: {:.4f}",
                                  child_net_payoff, neighbor_node, current_node, strong_pruning_payoff_[current_node]);
@@ -264,7 +253,6 @@ NodeId StrongPruner::find_best_component_root(ClusterId component_index) {
     assert(static_cast<size_t>(initial_root) < neighbors_.size());
     for (const auto& edge_pair : neighbors_[initial_root]) {
         NodeId neighbor_node = edge_pair.first;
-
         assert(static_cast<size_t>(neighbor_node) < final_component_label_.size());
         if (final_component_label_[neighbor_node] == component_index) {
             dfs_stack2_.push_back(neighbor_node);
@@ -311,7 +299,6 @@ NodeId StrongPruner::find_best_component_root(ClusterId component_index) {
         for (const auto& edge_pair : neighbors_[current_node]) {
             NodeId neighbor_node = edge_pair.first;
             if (neighbor_node != parent_node) {
-
                 assert(static_cast<size_t>(neighbor_node) < final_component_label_.size());
                 if (final_component_label_[neighbor_node] == component_index) {
                     dfs_stack2_.push_back(neighbor_node);
@@ -359,7 +346,6 @@ void StrongPruner::mark_nodes_as_deleted(NodeId start_node_index, NodeId parent_
                 logger_->log(LogLevel::TRACE, "    Marked node {} as deleted (neighbor of {}).", neighbor_node, current_node);
             }
         }
-
         parent_node_index = kInvalidNodeId;
     }
 }

@@ -6,13 +6,13 @@
 
 #include <vector>
 #include <utility>
+#include <span>
 
 #include "gtest/gtest.h"
 
 using namespace cluster_approx;
 
 TEST(SimplePrunerTest, ReturnsIntermediateResult) {
-
     test_utils::NullLogger logger;
     size_t num_nodes = 5;
     std::vector<std::pair<NodeId, NodeId>> edges_vec = {{0, 1}, {1, 2}, {2, 3}, {3, 4}};
@@ -27,13 +27,13 @@ TEST(SimplePrunerTest, ReturnsIntermediateResult) {
 
     CoreAlgorithmResult core_result;
     core_result.phase1_edges = {0, 3};
-
+    // Node 2 is filtered out, so edges connecting to it should ideally be dropped 
+    // by simple pruner if the logic requires both endpoints to be good.
     core_result.initial_node_filter = {true, true, false, true, true};
 
     PruningInput input{graph, core_result, &logger};
 
     pruning::SimplePruner pruner;
-
     PruningResult result = pruner.prune(input);
 
     std::vector<EdgeId> expected_edges = {0, 3};
