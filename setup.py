@@ -156,22 +156,27 @@ if sys.platform == "win32":
         "/std:c++latest",
         "/bigobj",
         "/utf-8",
+        "/openmp",
     ]
     extra_link_args = []
 elif sys.platform == "darwin":
     extra_compile_args.extend([
         "-std=c++23",
+        "-fopenmp",
         "-mmacosx-version-min=10.15",
     ])
     extra_link_args.extend([
+        "-fopenmp",
         "-stdlib=libc++",
         "-mmacosx-version-min=10.15",
     ])
 else:
     extra_compile_args.extend([
         "-std=c++23",
+        "-fopenmp",
     ])
     extra_link_args.extend([
+         "-fopenmp",
          "-pthread",
     ])
 

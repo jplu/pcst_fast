@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pcst_fast/pcst_interfaces.h"
+#include "pcst_fast/pruning/pruning_utils.h"
 #include <vector>
 #include <utility>
 
@@ -21,7 +22,7 @@ class GWPruner final : public IPruner {
 
     std::vector<bool> node_deleted_;
     std::vector<Cluster>* clusters_ptr_ = nullptr;
-    std::vector<std::vector<std::pair<NodeId, double>>> neighbors_;
+    CSRGraph neighbors_;
     std::vector<NodeId> node_queue_;
 
     void mark_clusters_as_necessary_from_node(NodeId start_node_index);

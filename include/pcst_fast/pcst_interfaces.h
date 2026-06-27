@@ -35,14 +35,13 @@ struct CoreAlgorithmResult {
     std::vector<Cluster> final_cluster_state;
     Statistics statistics;
     
-    // Owns the memory for all pairing heap nodes created during the algorithm
-    // ensuring safety when Result outlives the Algorithm instance.
+    // Owns the pre-allocated flat array of pairing heap nodes,
+    // ensuring nodes remain valid when the result outlives the algorithm.
     std::unique_ptr<PairingHeapType::AllocatorType> heap_node_allocator;
 };
 
 struct PruningInput {
     const GraphData& graph;
-    // Removed const to allow GWPruner to modify 'necessary' flags
     CoreAlgorithmResult& core_result;
     Logger* logger;
 };

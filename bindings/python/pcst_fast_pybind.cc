@@ -19,7 +19,6 @@
 #include <memory>
 #include <map>
 
-
 namespace py = pybind11;
 using namespace cluster_approx;
 
@@ -38,15 +37,15 @@ LogLevel map_verbosity_to_log_level(int verbosity_level) {
     return level_map.at(verbosity_level);
 }
 
-
 std::pair<py::array_t<NodeId>, py::array_t<EdgeId>> pcst_fast(
-    py::array_t<NodeId, py::array::c_style | py::array::forcecast> edges,
-    py::array_t<double, py::array::c_style | py::array::forcecast> prizes,
-    py::array_t<double, py::array::c_style | py::array::forcecast> costs,
+    py::array_t<NodeId, py::array::c_style> edges,
+    py::array_t<double, py::array::c_style> prizes,
+    py::array_t<double, py::array::c_style> costs,
     NodeId root,
     int num_clusters,
     const std::string& pruning_method_str,
     int verbosity_level) {
+    
     py::buffer_info edges_info = edges.request();
     py::buffer_info prizes_info = prizes.request();
     py::buffer_info costs_info = costs.request();
@@ -91,11 +90,9 @@ std::pair<py::array_t<NodeId>, py::array_t<EdgeId>> pcst_fast(
                                     ". Valid options are: 'none', 'simple', 'gw', 'strong'.");
     }
 
-
     StderrLogger logger(map_verbosity_to_log_level(verbosity_level));
     logger.log(LogLevel::INFO, "pcst_fast pybind called. Root: {}, Target Clusters: {}, Pruning: {}, Verbosity: {}",
                root, num_clusters, pruning_method_str, verbosity_level);
-
 
     auto* edges_ptr = static_cast<NodeId*>(edges_info.ptr);
     auto* prizes_ptr = static_cast<double*>(prizes_info.ptr);
@@ -113,39 +110,43 @@ std::pair<py::array_t<NodeId>, py::array_t<EdgeId>> pcst_fast(
         .root = root
     };
 
+    PruningResult final_result;
 
-    PCSTCoreAlgorithm core_algo(graph, target_num_active_clusters, &logger);
-    CoreAlgorithmResult core_result = core_algo.run();
+    // Enclosing heavy CPU computations in a tight scope to safely release Python's GIL.
+    // Python APIs (like NumPy array instantiations) are excluded from this block.
+    {
+        py::gil_scoped_release release;
 
+        PCSTCoreAlgorithm core_algo(graph, target_num_active_clusters, &logger);
+        CoreAlgorithmResult core_result = core_algo.run();
 
-    std::unique_ptr<IPruner> pruner;
-    switch (pruning_method) {
-    case PruningMethod::kNone:
-        pruner = std::make_unique<pruning::NoPruner>();
-        break;
-    case PruningMethod::kSimple:
-        pruner = std::make_unique<pruning::SimplePruner>();
-        break;
-    case PruningMethod::kGW:
-        pruner = std::make_unique<pruning::GWPruner>();
-        break;
-    case PruningMethod::kStrong:
-        pruner = std::make_unique<pruning::StrongPruner>();
-        break;
-    case PruningMethod::kUnknown:
-    default:
-        throw std::logic_error("Invalid pruning method reached switch statement.");
-    }
+        std::unique_ptr<IPruner> pruner;
+        switch (pruning_method) {
+        case PruningMethod::kNone:
+            pruner = std::make_unique<pruning::NoPruner>();
+            break;
+        case PruningMethod::kSimple:
+            pruner = std::make_unique<pruning::SimplePruner>();
+            break;
+        case PruningMethod::kGW:
+            pruner = std::make_unique<pruning::GWPruner>();
+            break;
+        case PruningMethod::kStrong:
+            pruner = std::make_unique<pruning::StrongPruner>();
+            break;
+        default:
+            throw std::logic_error("Invalid pruning method reached switch statement.");
+        }
 
-    PruningInput pruning_input {
-        .graph = graph,
-        .core_result = core_result,
-        .logger = &logger
-    };
+        PruningInput pruning_input {
+            .graph = graph,
+            .core_result = core_result,
+            .logger = &logger
+        };
 
-    logger.log(LogLevel::INFO, "Core algorithm finished. Running {} pruner.", pruning_method_str);
-    PruningResult final_result = pruner->prune(pruning_input);
-
+        logger.log(LogLevel::INFO, "Core algorithm finished. Running {} pruner.", pruning_method_str);
+        final_result = pruner->prune(pruning_input);
+    } // GIL is automatically re-acquired here
 
     logger.log(LogLevel::INFO, "Pruning finished. Result: {} nodes, {} edges.",
                final_result.nodes.size(), final_result.edges.size());
@@ -162,7 +163,6 @@ std::pair<py::array_t<NodeId>, py::array_t<EdgeId>> pcst_fast(
 
     return std::make_pair(result_nodes_array, result_edges_array);
 }
-
 
 PYBIND11_MODULE(pcst_fast, m) {
     m.doc() = R"pbdoc(
@@ -193,9 +193,9 @@ PYBIND11_MODULE(pcst_fast, m) {
         and potentially requiring a specific root node.
 
         Args:
-            edges (numpy.ndarray[int64]): Array of shape (num_edges, 2) listing undirected edges
+            edges (numpy.ndarray[int32]): Array of shape (num_edges, 2) listing undirected edges
                                            using 0-based node indices. Must be C-contiguous.
-                                           Indices must fit within a 32-bit signed integer.
+                                           Must use 32-bit signed integers (np.int32) to avoid copying.
             prizes (numpy.ndarray[float64]): Array of shape (num_nodes,) listing non-negative node prizes.
                                              Must be C-contiguous.
             costs (numpy.ndarray[float64]): Array of shape (num_edges,) listing non-negative edge costs.
@@ -210,7 +210,7 @@ PYBIND11_MODULE(pcst_fast, m) {
                                 For the unrooted variant (root < 0), this must be positive.
             pruning (str): The pruning method to apply after the main algorithm phase to potentially
                            improve the solution quality or enforce structure.
-                           Options: "none", "simple", "gw", "strong", "connectfinal".
+                           Options: "none", "simple", "gw", "strong".
             verbosity_level (int, optional): Controls the maximum level of messages printed by the C++ module.
                                              Higher values show more detail. Defaults to 0 (FATAL).
                                               0: FATAL
@@ -222,9 +222,9 @@ PYBIND11_MODULE(pcst_fast, m) {
                                              Output goes to Python's stdout/stderr via print().
 
         Returns:
-            tuple[numpy.ndarray[int64], numpy.ndarray[int64]]: A pair containing:
-                - nodes: A 1D numpy array of selected node indices (int64) present in the solution forest. Sorted.
-                - edges: A 1D numpy array of selected edge indices (int64), corresponding to the
+            tuple[numpy.ndarray[int32], numpy.ndarray[int32]]: A pair containing:
+                - nodes: A 1D numpy array of selected node indices (int32) present in the solution forest. Sorted.
+                - edges: A 1D numpy array of selected edge indices (int32), corresponding to the
                          indices in the input "costs" and "edges" arrays, forming the solution forest. Sorted.
 
         Raises:

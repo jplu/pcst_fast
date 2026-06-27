@@ -1,10 +1,10 @@
 # Makefile for pcst_fast C++ library and Python bindings
 
 CXX = g++
-CXXFLAGS_BASE = -std=c++23 -O3 -Wall -Wextra -pedantic -fPIC
+CXXFLAGS_BASE = -std=c++23 -O3 -Wall -Wextra -pedantic -fPIC -fopenmp
 CXXFLAGS_RELEASE = $(CXXFLAGS_BASE) -DNDEBUG
 CXXFLAGS_DEBUG = $(CXXFLAGS_BASE) -g
-LDFLAGS =
+LDFLAGS = -fopenmp
 LDLIBS = -pthread
 
 SRCDIR = src

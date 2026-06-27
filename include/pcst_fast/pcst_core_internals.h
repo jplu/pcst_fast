@@ -3,6 +3,7 @@
 #include "pcst_fast/pcst_types.h"
 #include "pcst_fast/datastructures/pairing_heap.h"
 #include <vector>
+#include <limits>
 
 namespace cluster_approx {
 
@@ -15,7 +16,9 @@ struct EdgeInfo {
 struct EdgePart {
     double next_event_val = std::numeric_limits<double>::infinity();
     bool deleted = false;
-    PairingHeapType::ItemHandle heap_node = nullptr;
+    // Replacing pointer-based handles with 32-bit index handles.
+    // -1 represents a null/invalid handle.
+    PairingHeapType::ItemHandle heap_node = -1;
 };
 
 struct Cluster {
@@ -35,7 +38,7 @@ struct Cluster {
     ClusterId child_cluster_2 = kInvalidClusterId;
     bool necessary = false;
 
-    // Modified constructor to take allocator and buffer
+    // Constructor updated to take the index-based allocator and workspace buffer
     Cluster(PairingHeapType::AllocatorType* allocator, std::vector<PairingHeapType::ItemHandle>* heap_buffer)
         : edge_parts(allocator, heap_buffer) {}
 

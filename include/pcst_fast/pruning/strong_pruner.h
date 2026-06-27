@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pcst_fast/pcst_interfaces.h"
+#include "pcst_fast/pruning/pruning_utils.h"
 #include <vector>
 #include <utility>
 
@@ -16,7 +17,7 @@ class StrongPruner final : public IPruner {
     size_t num_nodes_ = 0;
     Logger* logger_ = nullptr;
 
-    std::vector<std::vector<std::pair<NodeId, double>>> neighbors_;
+    CSRGraph neighbors_;
 
     std::vector<bool> node_deleted_;
     std::vector<ClusterId> final_component_label_;
