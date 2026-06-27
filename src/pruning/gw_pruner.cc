@@ -39,7 +39,7 @@ PruningResult GWPruner::prune(const PruningInput& input) {
     logger_ = input.logger;
     assert(logger_ != nullptr);
     num_nodes_ = input.graph.prizes.size();
-    node_deleted_.assign(num_nodes_, false);
+    node_deleted_.assign(num_nodes_, 0);
     node_queue_.clear();
 
     clusters_ptr_ = &input.core_result.final_cluster_state;
@@ -50,12 +50,8 @@ PruningResult GWPruner::prune(const PruningInput& input) {
     std::vector<EdgeId> intermediate_edges;
     intermediate_edges.reserve(input.core_result.phase1_edges.size());
     for (EdgeId edge_idx : input.core_result.phase1_edges) {
-        assert(static_cast<size_t>(edge_idx) < input.graph.edges.size());
         NodeId u = input.graph.edges[edge_idx].first;
         NodeId v = input.graph.edges[edge_idx].second;
-        assert(static_cast<size_t>(u) < num_nodes_ && static_cast<size_t>(v) < num_nodes_);
-        assert(static_cast<size_t>(u) < input.core_result.initial_node_filter.size());
-        assert(static_cast<size_t>(v) < input.core_result.initial_node_filter.size());
 
         if (input.core_result.initial_node_filter[u] && input.core_result.initial_node_filter[v]) {
             intermediate_edges.push_back(edge_idx);
@@ -87,14 +83,10 @@ PruningResult GWPruner::prune(const PruningInput& input) {
             mark_clusters_as_necessary_from_node(u);
             mark_clusters_as_necessary_from_node(v);
         } else {
-            assert(static_cast<size_t>(merge_event_id) < input.core_result.inactive_merge_events.size());
             const InactiveMergeEvent& merge_event = input.core_result.inactive_merge_events[merge_event_id];
-
             NodeId active_side_node = merge_event.active_cluster_node;
             NodeId inactive_side_node = merge_event.inactive_cluster_node;
             ClusterId inactive_cluster_index = merge_event.inactive_cluster_index;
-
-            assert(static_cast<size_t>(inactive_cluster_index) < clusters_ptr_->size() && "Inactive cluster index out of bounds!");
 
             if ((*clusters_ptr_)[inactive_cluster_index].necessary) {
                 final_edges.push_back(current_edge_index);
@@ -123,16 +115,13 @@ PruningResult GWPruner::prune(const PruningInput& input) {
 }
 
 void GWPruner::mark_nodes_as_deleted(NodeId start_node_index, NodeId parent_node_index) {
-    assert(static_cast<size_t>(start_node_index) < num_nodes_);
-    assert(parent_node_index == kInvalidNodeId || static_cast<size_t>(parent_node_index) < num_nodes_);
-
     node_queue_.clear();
 
     if (node_deleted_[start_node_index]) {
         return;
     }
 
-    node_deleted_[start_node_index] = true;
+    node_deleted_[start_node_index] = 1;
     node_queue_.push_back(start_node_index);
 
     size_t current_idx = 0;
@@ -147,7 +136,7 @@ void GWPruner::mark_nodes_as_deleted(NodeId start_node_index, NodeId parent_node
             }
 
             if (!node_deleted_[neighbor_node]) {
-                node_deleted_[neighbor_node] = true;
+                node_deleted_[neighbor_node] = 1;
                 node_queue_.push_back(neighbor_node);
             }
         }

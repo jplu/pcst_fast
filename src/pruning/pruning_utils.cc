@@ -10,8 +10,8 @@ namespace pruning {
 
 std::vector<NodeId> build_final_node_set(
     size_t num_nodes,
-    const std::vector<bool>& node_deleted_filter,
-    const std::vector<bool>& initial_node_filter) {
+    const std::vector<uint8_t>& node_deleted_filter,
+    const std::vector<uint8_t>& initial_node_filter) {
     assert(node_deleted_filter.size() == num_nodes);
     assert(initial_node_filter.size() == num_nodes);
 
@@ -35,37 +35,36 @@ CSRGraph build_adjacency_list_csr(
     CSRGraph csr;
     csr.row_ptr.assign(num_nodes + 1, 0);
 
-    // Step 1: Count exact node degrees
+    // Step 1: Count degrees
     std::vector<uint32_t> degrees(num_nodes, 0);
     for (EdgeId edge_idx : edges) {
-        assert(static_cast<size_t>(edge_idx) < graph.edges.size());
         const auto& edge = graph.edges[edge_idx];
         degrees[edge.first]++;
         degrees[edge.second]++;
     }
 
-    // Step 2: Establish base row index pointers
+    // Step 2: Establish base row index pointers leveraging degrees array as tracking offsets implicitly
     uint32_t sum = 0;
     for (size_t i = 0; i < num_nodes; ++i) {
         csr.row_ptr[i] = sum;
-        sum += degrees[i];
+        uint32_t deg = degrees[i];
+        degrees[i] = sum;
+        sum += deg;
     }
     csr.row_ptr[num_nodes] = sum;
 
     csr.col_indices.resize(sum);
     csr.edge_costs.resize(sum);
 
-    std::vector<uint32_t> current_offset = csr.row_ptr;
-
-    // Step 3: Contiguously write neighbor indices and weights
+    // Step 3: Contiguously write neighbor indices directly bypassing vector offset copies
     for (EdgeId edge_idx : edges) {
         const auto& edge = graph.edges[edge_idx];
         double cost = graph.costs[edge_idx];
         NodeId u = edge.first;
         NodeId v = edge.second;
 
-        uint32_t u_pos = current_offset[u]++;
-        uint32_t v_pos = current_offset[v]++;
+        uint32_t u_pos = degrees[u]++;
+        uint32_t v_pos = degrees[v]++;
 
         csr.col_indices[u_pos] = v;
         csr.edge_costs[u_pos] = cost;

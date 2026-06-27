@@ -2,9 +2,10 @@
 
 CXX = g++
 CXXFLAGS_BASE = -std=c++23 -O3 -Wall -Wextra -pedantic -fPIC -fopenmp
-CXXFLAGS_RELEASE = $(CXXFLAGS_BASE) -DNDEBUG
+CXXFLAGS_RELEASE = $(CXXFLAGS_BASE) -DNDEBUG -march=native -fomit-frame-pointer -ffast-math -flto
 CXXFLAGS_DEBUG = $(CXXFLAGS_BASE) -g
 LDFLAGS = -fopenmp
+LDFLAGS_RELEASE = -fopenmp -O3 -flto
 LDLIBS = -pthread
 
 SRCDIR = src
@@ -39,7 +40,7 @@ PYTHON_CFLAGS := $(shell $(PYTHON_CONFIG) --cflags)
 PYTHON_LDFLAGS := $(shell $(PYTHON_CONFIG) --ldflags --embed || $(PYTHON_CONFIG) --ldflags)
 
 CORE_SRCS = $(wildcard $(SRCDIR)/*.cc $(SRCDIR)/pruning/*.cc)
-TEST_NAMES = logger end_to_end pcst_core_algorithm no_pruner simple_pruner gw_pruner strong_pruner
+TEST_NAMES = logger end_to_end pcst_core_algorithm no_pruner simple_pruner gw_pruner strong_pruner pcst_performance
 TEST_BASE_SRCS = $(foreach test,$(TEST_NAMES),$(TESTDIR)/$(test)_test.cc)
 BINDING_SRC = $(BINDINGSDIR)/pcst_fast_pybind.cc
 GTEST_SRCS = $(EXTERNALDIR)/googletest/googletest/src/gtest-all.cc
@@ -68,11 +69,13 @@ else
     PYTHON_MODULE = $(PYTHON_MODULE_DIR)/$(PYTHON_MODULE_NAME)$(PYTHON_MODULE_EXT)
 endif
 
+# Dynamic Release target directory inclusion
 DIRS_TO_CREATE = $(filter-out ., $(OBJDIR_RELEASE)/src $(OBJDIR_RELEASE)/src/pruning $(OBJDIR_RELEASE)/bindings \
+                   $(OBJDIR_RELEASE)/tests $(OBJDIR_RELEASE)/tests/pruning $(OBJDIR_RELEASE)/gtest \
                    $(OBJDIR_DEBUG)/src $(OBJDIR_DEBUG)/src/pruning $(OBJDIR_DEBUG)/tests $(OBJDIR_DEBUG)/tests/pruning $(OBJDIR_DEBUG)/gtest \
                    $(BINDIR) $(LIBDIR) $(PYTHON_MODULE_DIR))
 
-.PHONY: all test clean python_binding run_tests build_tests check_compiler astyle content
+.PHONY: all test clean python_binding run_tests build_tests check_compiler astyle content benchmark
 
 check_compiler:
 	@echo "--- Checking Compiler Version ---"
@@ -134,7 +137,7 @@ $(PYTHON_MODULE): | $(PYTHON_MODULE_DIR) $(DIRS_TO_CREATE)
 
 $(PYTHON_MODULE): $(BINDING_OBJS_RELEASE) $(CORE_OBJS_RELEASE)
 	@echo "Linking Python module $@"
-	$(CXX) $(CXXFLAGS_RELEASE) $(LDFLAGS) $(BINDING_OBJS_RELEASE) $(CORE_OBJS_RELEASE) $(PYTHON_CFLAGS) $(PYTHON_LDFLAGS) -o "$@" -shared $(LDLIBS)
+	$(CXX) $(CXXFLAGS_RELEASE) $(LDFLAGS_RELEASE) $(BINDING_OBJS_RELEASE) $(CORE_OBJS_RELEASE) $(PYTHON_CFLAGS) $(PYTHON_LDFLAGS) -o "$@" -shared $(LDLIBS)
 
 test: check_compiler run_tests
 
@@ -154,6 +157,23 @@ run_tests: build_tests
 		echo ""; \
 	done
 	@echo "All tests passed."
+
+# Aggressive Release-optimized benchmark compilation targets
+benchmark: check_compiler $(BINDIR)/pcst_performance_benchmark
+	@echo "--- Running Highly Optimized Performance Benchmark ---"
+	./$(BINDIR)/pcst_performance_benchmark
+
+$(BINDIR)/pcst_performance_benchmark: $(OBJDIR_RELEASE)/tests/pcst_performance_test.o $(CORE_OBJS_RELEASE) $(OBJDIR_RELEASE)/gtest/gtest-all.o $(OBJDIR_RELEASE)/gtest/gtest_main.o
+	@echo "Linking release benchmark executable $@"
+	$(CXX) $(CXXFLAGS_RELEASE) $(LDFLAGS_RELEASE) $^ -o $@ $(LDLIBS)
+
+$(OBJDIR_RELEASE)/tests/%.o: $(TESTDIR)/%.cc | $(OBJDIR_RELEASE)/tests $(DIRS_TO_CREATE)
+	@echo "Compiling (Release Test) $<"
+	$(CXX) $(CXXFLAGS_RELEASE) $(INCLUDES) -MMD -MP -c $< -o $@
+
+$(OBJDIR_RELEASE)/gtest/%.o: $(EXTERNALDIR)/googletest/googletest/src/%.cc | $(OBJDIR_RELEASE)/gtest $(DIRS_TO_CREATE)
+	@echo "Compiling gtest (Release) $*.cc"
+	$(CXX) $(CXXFLAGS_RELEASE) $(INCLUDES) -I$(EXTERNALDIR)/googletest/googletest -c $< -o $@
 
 $(OBJDIR_RELEASE)/src/%.o: $(SRCDIR)/%.cc | $(OBJDIR_RELEASE)/src $(DIRS_TO_CREATE)
 	@echo "Compiling (Release) $<"
@@ -197,6 +217,6 @@ clean:
 	$(RM) $(PYTHON_MODULE) || echo "Python module '$(PYTHON_MODULE)' not found or already removed."
 	@echo "Clean complete."
 
-DEPFILES_RELEASE = $(CORE_OBJS_RELEASE:.o=.d) $(BINDING_OBJS_RELEASE:.o=.d)
+DEPFILES_RELEASE = $(CORE_OBJS_RELEASE:.o=.d) $(BINDING_OBJS_RELEASE:.o=.d) $(OBJDIR_RELEASE)/tests/pcst_performance_test.d
 DEPFILES_DEBUG = $(CORE_OBJS_DEBUG:.o=.d) $(TEST_BASE_OBJS_DEBUG:.o=.d) $(GTEST_OBJS_DEBUG:.o=.d) $(GTEST_MAIN_OBJS_DEBUG:.o=.d)
 -include $(DEPFILES_RELEASE) $(DEPFILES_DEBUG)

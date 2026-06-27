@@ -4,6 +4,7 @@
 #include "pcst_fast/pruning/pruning_utils.h"
 #include <vector>
 #include <utility>
+#include <cstdint>
 
 namespace cluster_approx {
 
@@ -20,7 +21,7 @@ class GWPruner final : public IPruner {
     size_t num_nodes_ = 0;
     Logger* logger_ = nullptr;
 
-    std::vector<bool> node_deleted_;
+    std::vector<uint8_t> node_deleted_;
     std::vector<Cluster>* clusters_ptr_ = nullptr;
     CSRGraph neighbors_;
     std::vector<NodeId> node_queue_;

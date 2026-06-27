@@ -23,18 +23,12 @@ namespace py = pybind11;
 using namespace cluster_approx;
 
 LogLevel map_verbosity_to_log_level(int verbosity_level) {
-    if (verbosity_level < 0) verbosity_level = 0;
-    if (verbosity_level > 5) verbosity_level = 5;
-
-    static const std::map<int, LogLevel> level_map = {
-        {0, LogLevel::FATAL},
-        {1, LogLevel::ERROR},
-        {2, LogLevel::WARNING},
-        {3, LogLevel::INFO},
-        {4, LogLevel::DEBUG},
-        {5, LogLevel::TRACE}
-    };
-    return level_map.at(verbosity_level);
+    if (verbosity_level <= 0) return LogLevel::FATAL;
+    if (verbosity_level == 1) return LogLevel::ERROR;
+    if (verbosity_level == 2) return LogLevel::WARNING;
+    if (verbosity_level == 3) return LogLevel::INFO;
+    if (verbosity_level == 4) return LogLevel::DEBUG;
+    return LogLevel::TRACE;
 }
 
 std::pair<py::array_t<NodeId>, py::array_t<EdgeId>> pcst_fast(

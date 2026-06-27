@@ -6,145 +6,169 @@
 #include <cassert>
 #include <algorithm>
 #include <cstdint>
+#include "pcst_fast/pcst_types.h"
 
 namespace cluster_approx {
 
-/**
- * @brief A 4-ary heap priority queue using lazy deletions.
- *
- * This design eliminates the expensive lookup mapping and active decrease-key operations.
- * Keys updates are handled as duplicate pushes with incremented version IDs.
- * Stale duplicates are cleared from the top of the heap only when querying or popping.
- * A 4-ary layout matches CPU cache lines better than traditional binary heaps.
- */
 template <typename ValueType, typename IndexType>
 class PriorityQueue {
 public:
     struct Element {
         ValueType value;
         IndexType index;
-        uint32_t version;
-
-        bool operator<(const Element& other) const noexcept {
-            return value < other.value;
-        }
-        bool operator>(const Element& other) const noexcept {
-            return value > other.value;
-        }
     };
 
     PriorityQueue() = default;
 
-    [[nodiscard]] bool is_empty() const noexcept {
-        purge_stale();
+    void reserve(size_t max_elements, size_t max_index) {
+        heap_.reserve(max_elements);
+        pos_.assign(max_index, -1);
+    }
+
+    FORCE_INLINE [[nodiscard]] bool is_empty() const noexcept {
         return heap_.empty();
     }
 
-    [[nodiscard]] std::optional<std::pair<ValueType, IndexType>> get_min() const {
-        purge_stale();
+    FORCE_INLINE [[nodiscard]] std::optional<std::pair<ValueType, IndexType>> get_min() const {
         if (heap_.empty()) return std::nullopt;
         return std::make_pair(heap_.front().value, heap_.front().index);
     }
 
-    [[nodiscard]] std::optional<std::pair<ValueType, IndexType>> delete_min() {
-        purge_stale();
+    FORCE_INLINE std::optional<std::pair<ValueType, IndexType>> delete_min() {
         if (heap_.empty()) return std::nullopt;
 
         Element min_elem = heap_.front();
-        pop_front();
-        return std::make_pair(min_elem.value, min_elem.index);
-    }
+        pos_[min_elem.index] = -1;
 
-    void insert(ValueType value, IndexType index) {
-        assert(index >= 0);
-        size_t idx = static_cast<size_t>(index);
-        if (idx >= versions_.size()) {
-            versions_.resize(idx + 1, 0);
-        }
-
-        // Increment the current version to invalidate prior heap instances of this index
-        uint32_t new_version = ++versions_[idx];
-        heap_.push_back({value, index, new_version});
-        sift_up(heap_.size() - 1);
-    }
-
-    void decrease_key(ValueType new_value, IndexType index) {
-        // Under lazy deletion, updating a key is treated as inserting with a fresh version
-        insert(new_value, index);
-    }
-
-    void delete_element(IndexType index) {
-        size_t idx = static_cast<size_t>(index);
-        if (idx < versions_.size()) {
-            // Incrementing the target index's version automatically invalidates its active heap nodes
-            versions_[idx]++;
-        }
-    }
-
-private:
-    mutable std::vector<Element> heap_;
-    mutable std::vector<uint32_t> versions_;
-
-    void purge_stale() const {
-        while (!heap_.empty()) {
-            const auto& top = heap_.front();
-            size_t idx = static_cast<size_t>(top.index);
-            if (idx < versions_.size() && top.version == versions_[idx]) {
-                break; // Found valid active event
-            }
-            pop_front(); // Evict stale event
-        }
-    }
-
-    void pop_front() const {
-        if (heap_.empty()) return;
         if (heap_.size() > 1) {
-            heap_[0] = std::move(heap_.back());
+            heap_[0] = heap_.back();
             heap_.pop_back();
+            pos_[heap_[0].index] = 0;
             sift_down(0);
         } else {
             heap_.pop_back();
         }
+        return std::make_pair(min_elem.value, min_elem.index);
     }
 
-    void sift_up(size_t i) const {
+    FORCE_INLINE void push_back_fast(ValueType value, IndexType index) {
+        size_t idx = static_cast<size_t>(index);
+        pos_[idx] = static_cast<int32_t>(heap_.size());
+        heap_.push_back({value, index});
+    }
+
+    FORCE_INLINE void build_heap() {
+        int32_t n = static_cast<int32_t>(heap_.size());
+        if (n <= 1) return;
+        for (int32_t i = (n - 2) / 4; i >= 0; --i) {
+            sift_down(i);
+        }
+    }
+
+    FORCE_INLINE void insert_or_update(ValueType value, IndexType index) {
+        size_t idx = static_cast<size_t>(index);
+        assert(idx < pos_.size());
+        int32_t p = pos_[idx];
+
+        if (p == -1) {
+            p = static_cast<int32_t>(heap_.size());
+            heap_.push_back({value, index});
+            pos_[idx] = p;
+            sift_up(p);
+        } else {
+            if (value < heap_[p].value) {
+                heap_[p].value = value;
+                sift_up(p);
+            } else if (value > heap_[p].value) {
+                heap_[p].value = value;
+                sift_down(p);
+            }
+        }
+    }
+
+    FORCE_INLINE void insert(ValueType value, IndexType index) {
+        insert_or_update(value, index);
+    }
+
+    FORCE_INLINE void decrease_key(ValueType new_value, IndexType index) {
+        insert_or_update(new_value, index);
+    }
+
+    FORCE_INLINE void delete_element(IndexType index) {
+        size_t idx = static_cast<size_t>(index);
+        assert(idx < pos_.size());
+        int32_t p = pos_[idx];
+        if (p == -1) return;
+
+        int32_t last_idx = static_cast<int32_t>(heap_.size()) - 1;
+        if (p == last_idx) {
+            pos_[idx] = -1;
+            heap_.pop_back();
+        } else {
+            heap_[p] = heap_.back();
+            heap_.pop_back();
+            pos_[heap_[p].index] = p;
+            pos_[idx] = -1;
+
+            if (p > 0 && heap_[p].value < heap_[(p - 1) / 4].value) {
+                sift_up(p);
+            } else {
+                sift_down(p);
+            }
+        }
+    }
+
+private:
+    std::vector<Element> heap_;
+    std::vector<int32_t> pos_;
+
+    FORCE_INLINE void sift_up(int32_t i) {
+        if (i == 0) return;
+        Element val = heap_[i];
         while (i > 0) {
-            size_t p = (i - 1) / 4;
-            if (heap_[i] < heap_[p]) {
-                std::swap(heap_[i], heap_[p]);
+            int32_t p = (i - 1) / 4;
+            if (val.value < heap_[p].value) {
+                heap_[i] = heap_[p];
+                pos_[heap_[i].index] = i;
                 i = p;
             } else {
                 break;
             }
         }
+        heap_[i] = val;
+        pos_[val.index] = i;
     }
 
-    void sift_down(size_t i) const {
-        size_t n = heap_.size();
+    FORCE_INLINE void sift_down(int32_t i) {
+        int32_t n = static_cast<int32_t>(heap_.size());
+        if (n <= 1) return;
+        Element val = heap_[i];
+
         while (true) {
-            size_t first_child = 4 * i + 1;
+            int32_t first_child = 4 * i + 1;
             if (first_child >= n) break;
 
-            size_t smallest = i;
-            // Scan through up to 4 children of the current node
-            for (size_t c = 0; c < 4; ++c) {
-                size_t child = first_child + c;
-                if (child < n) {
-                    if (heap_[child] < heap_[smallest]) {
-                        smallest = child;
-                    }
-                } else {
-                    break;
+            int32_t min_child = first_child;
+            ValueType min_val = heap_[first_child].value;
+
+            int32_t limit = std::min(first_child + 4, n);
+            for (int32_t child = first_child + 1; child < limit; ++child) {
+                if (heap_[child].value < min_val) {
+                    min_val = heap_[child].value;
+                    min_child = child;
                 }
             }
 
-            if (smallest != i) {
-                std::swap(heap_[i], heap_[smallest]);
-                i = smallest;
+            if (min_val < val.value) {
+                heap_[i] = heap_[min_child];
+                pos_[heap_[i].index] = i;
+                i = min_child;
             } else {
                 break;
             }
         }
+        heap_[i] = val;
+        pos_[val.index] = i;
     }
 };
 

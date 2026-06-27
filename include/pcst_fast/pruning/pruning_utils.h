@@ -5,15 +5,11 @@
 
 #include <vector>
 #include <utility>
+#include <cstdint>
 
 namespace cluster_approx {
 namespace pruning {
 
-/**
- * @brief High-performance Compressed Sparse Row (CSR) Graph.
- * Storing neighbors and edge weights contiguously avoids millions of small vector allocations
- * and guarantees L1 cache-line layout during DFS pruning traversals.
- */
 struct CSRGraph {
     std::vector<uint32_t> row_ptr;
     std::vector<NodeId> col_indices;
@@ -48,8 +44,8 @@ struct CSRGraph {
 
 [[nodiscard]] std::vector<NodeId> build_final_node_set(
     size_t num_nodes,
-    const std::vector<bool>& node_deleted_filter,
-    const std::vector<bool>& initial_node_filter);
+    const std::vector<uint8_t>& node_deleted_filter,
+    const std::vector<uint8_t>& initial_node_filter);
 
 [[nodiscard]] CSRGraph build_adjacency_list_csr(
     const std::vector<EdgeId>& edges,

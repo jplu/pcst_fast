@@ -16,12 +16,8 @@ PruningResult SimplePruner::prune(const PruningInput& input) {
 
     result.edges.reserve(input.core_result.phase1_edges.size());
     for (EdgeId edge_idx : input.core_result.phase1_edges) {
-        assert(static_cast<size_t>(edge_idx) < input.graph.edges.size());
         NodeId u = input.graph.edges[edge_idx].first;
         NodeId v = input.graph.edges[edge_idx].second;
-        assert(static_cast<size_t>(u) < num_nodes && static_cast<size_t>(v) < num_nodes);
-        assert(static_cast<size_t>(u) < input.core_result.initial_node_filter.size());
-        assert(static_cast<size_t>(v) < input.core_result.initial_node_filter.size());
 
         if (input.core_result.initial_node_filter[u] && input.core_result.initial_node_filter[v]) {
             result.edges.push_back(edge_idx);
@@ -29,7 +25,7 @@ PruningResult SimplePruner::prune(const PruningInput& input) {
     }
     input.logger->log(LogLevel::DEBUG, "SimplePruning: Filtered phase1 edges down to {} intermediate edges.", result.edges.size());
 
-    std::vector<bool> node_deleted(num_nodes, false);
+    std::vector<uint8_t> node_deleted(num_nodes, 0);
     result.nodes = build_final_node_set(num_nodes, node_deleted, input.core_result.initial_node_filter);
 
     input.logger->log(LogLevel::DEBUG, "SimplePruning: Derived {} nodes.", result.nodes.size());

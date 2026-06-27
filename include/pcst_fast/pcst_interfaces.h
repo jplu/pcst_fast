@@ -29,15 +29,11 @@ struct GraphData {
 
 struct CoreAlgorithmResult {
     std::vector<EdgeId> phase1_edges;
-    std::vector<bool> initial_node_filter;
+    std::vector<uint8_t> initial_node_filter;
     std::vector<EventId> edge_inactive_merge_event_ids;
     std::vector<InactiveMergeEvent> inactive_merge_events;
     std::vector<Cluster> final_cluster_state;
     Statistics statistics;
-    
-    // Owns the pre-allocated flat array of pairing heap nodes,
-    // ensuring nodes remain valid when the result outlives the algorithm.
-    std::unique_ptr<PairingHeapType::AllocatorType> heap_node_allocator;
 };
 
 struct PruningInput {
