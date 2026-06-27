@@ -1,10 +1,10 @@
 { pkgs, ... }: {
-  channel = "stable-24.05";
+  channel = "unstable";
 
   packages = [
     pkgs.gnumake
     pkgs.binutils
-    pkgs.gcc
+    pkgs.gcc13
     pkgs.glibc
     pkgs.python3
     pkgs.astyle
