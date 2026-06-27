@@ -144,6 +144,10 @@ extra_compile_args = [
     "-pedantic",
     "-fPIC",
     "-DNDEBUG",
+    "-march=native",
+    "-fomit-frame-pointer",
+    "-ffast-math",
+    "-flto",
 ]
 extra_link_args = []
 
