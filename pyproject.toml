@@ -1,28 +1,31 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=61.0.0",
     "wheel",
-    "pybind11>=2.10"
+    "pybind11>=2.10.0"
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pcst_fast"
+name = "pcst-fast"
 dynamic = ["version"]
-description = "A fast implementation of the Goemans-Williamson scheme for the prize-collecting Steiner tree / forest problem."
+description = "A fast, thread-optimized implementation of the Goemans-Williamson scheme for the prize-collecting Steiner tree / forest problem."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "ludwigschmidt"},
     {name = "alexlenail"},
 ]
-classifiers=[
+dependencies = [
+    "numpy>=1.20.0"
+]
+classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: C++",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
